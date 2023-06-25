@@ -36,8 +36,8 @@ module.exports = {
               token: res.token,
               id: res.user.data.id,
               email: res.user.data.email,
-              name: res.user.data.firstname + ' ' + res.user.data.lastname,
-              store: res.user.data.store_id
+              name: res.user.data.first_name + ' ' + res.user.data.last_name,
+              photo: sails.config.imagePath + 'profile/' + res.user.data.photo
           }
         }
         

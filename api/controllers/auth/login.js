@@ -9,13 +9,11 @@ module.exports = {
         type: 'string',
         required: true
       },
-  
       password: {
         description: 'The unencrypted password to try in this attempt, e.g. "passwordlol".',
         type: 'string',
         required: true
       },
-  
       rememberMe: {
         description: 'Whether to extend the lifetime of the user\'s session.',
         extendedDescription:
@@ -38,10 +36,8 @@ module.exports = {
   from a logged-in user, that user's entire record from the database will be fetched
   and exposed as \`req.me\`.)`
       },
-  
       badCombo: {
-        description: `The provided email and password combination does not
-        match any user in the database.`,
+        description: `The email/password is incorrect.`,
         responseType: 'unauthorized'
         // ^This uses the custom `unauthorized` response located in `api/responses/unauthorized.js`.
         // To customize the generic "unauthorized" response across this entire app, change that file
@@ -51,23 +47,21 @@ module.exports = {
         // something else.  For example, you might set `statusCode: 498` and change the
         // implementation below accordingly (see http://sailsjs.com/docs/concepts/controllers).
       }
-  
     },
-  
   
     fn: async function ({email, password, rememberMe}) {
   
       // Look up by the email address.
       // (note that we lowercase it to ensure the lookup is always case-insensitive,
       // regardless of which database we're using)
-      var userRecord = await User.findOne({
-        select: ['id', 'username', 'email', 'firstname', 'lastname', 'store_id','password'],
-        where: {email: email.toLowerCase()},
+      var userRecord = await Member.findOne({
+        select: ['id', 'email', 'first_name', 'last_name', 'password'],
+        where: {email: email.toLowerCase(), status: 1}
       });
   
       // If there was no matching user, respond thru the "badCombo" exit.
-      if(!userRecord) {
-        throw 'badCombo';
+      if (!userRecord) {
+        return this.res.status(401).send('User is not exist / not active anymore');
       }
   
       // If the password doesn't match, then also exit thru "badCombo".

@@ -22,6 +22,7 @@ module.exports.routes = {
 
   // Auth
   'POST /api/v1/auth/login': { action: 'auth/login' },
+  'POST /api/v1/auth/register': { action: 'auth/register' },
 
   // Stores API
   'GET /api/v1/store/list': { action: 'store/index' },
