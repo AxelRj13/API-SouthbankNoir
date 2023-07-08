@@ -24,28 +24,20 @@ module.exports.routes = {
   'POST /api/v1/auth/login': { action: 'auth/login' },
   'POST /api/v1/auth/register': { action: 'auth/register' },
 
-  // Stores API
-  'GET /api/v1/store/list': { action: 'store/index' },
-  'GET /api/v1/store/detail/:id': { action: 'store/detail' },
+  // Membership
+  'POST /api/v1/membership/details': { action: 'membership/get-membership' },
 
-  // Shifts API
-  'POST /api/v1/shift/checkIn': { action: 'shift/check-in' },
-  'POST /api/v1/shift/checkOut': { action: 'shift/check-out' },
+  // PopupBanner
+  'POST /api/v1/popupbanner/get': { action: 'popupbanner/get-active-banner' },
 
-  // Create Order
-  'POST /api/v1/order/create': { action: 'order/create' },
+  // Promo
+  'POST /api/v1/promo/get-banner': { action: 'promo/get-homepage-banner' },
+  'POST /api/v1/promo/get': { action: 'promo/list' },
 
-  // List Barang
-  'POST /api/v1/product/list': { action: 'product/index'},
-  // Check promo
-  'POST /api/v1/product/check-promo': { action: 'product/check-promo'},
+  // Event
+  'POST /api/v1/event/today/get': { action: 'event/get-today-event' },
 
-  // List Satuan
-  'POST /api/v1/satuan/list': { action: 'satuan/index'},
-
-  // List Category
-  'POST /api/v1/category/list': { action: 'category/index'},
-
-  // List Payment
-  'POST /api/v1/payment/list': { action: 'payment/index'}
+  // Complaint
+  'POST /api/v1/complaint/create': { action: 'complaint/create-complaint' },
+  'POST /api/v1/complaint/get': { action: 'complaint/get-complaint-type' },
 };

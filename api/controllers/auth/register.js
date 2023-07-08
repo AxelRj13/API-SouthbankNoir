@@ -61,27 +61,27 @@ module.exports = {
             return this.res.status(400).send('Password doesn\'t match.');
         } else {
             const newMember = await Member.create({
-                first_name: first_name,
-                last_name: last_name,
-                phone: phone,
-                email: email,
-                date_of_birth: date_of_birth,
-                city: city.toUpperCase(),
-                gender: gender.toUpperCase(),
-                photo: 'noprofileimage.png',
-                status: 1,
-                password: bcrypt.hashSync(password, 10),
-                created_by: 1,
-                updated_by: 1,
-                created_at: new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"}),
-                updated_at: new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})
-              }).fetch();
-              
-              sails.log("successfully created: "+newMember.id);
-              this.req.session.userId = newMember.id;
-      
-              var jwTokenSign = jwToken.sign(newMember, this.req.headers['x-secret-token']);
-              return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, undefined, jwTokenSign);
+              first_name: first_name,
+              last_name: last_name,
+              phone: phone,
+              email: email,
+              date_of_birth: date_of_birth,
+              city: city.toUpperCase(),
+              gender: gender.toUpperCase(),
+              photo: 'noprofileimage.png',
+              status: 1,
+              password: bcrypt.hashSync(password, 10),
+              created_by: 1,
+              updated_by: 1,
+              created_at: new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"}),
+              updated_at: new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"})
+            }).fetch();
+            
+            sails.log("successfully created: "+newMember.id);
+            this.req.session.userId = newMember.id;
+    
+            var jwTokenSign = jwToken.sign(newMember, this.req.headers['x-secret-token']);
+            return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, undefined, jwTokenSign);
         }
       }
     }
