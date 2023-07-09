@@ -55,7 +55,7 @@ module.exports = {
       // (note that we lowercase it to ensure the lookup is always case-insensitive,
       // regardless of which database we're using)
       var userRecord = await Member.findOne({
-        select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo'],
+        select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo', 'phone'],
         where: {email: email.toLowerCase(), status: 1}
       });
   

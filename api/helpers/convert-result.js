@@ -37,7 +37,8 @@ module.exports = {
             id: res.user.data.id,
             email: res.user.data.email,
             name: res.user.data.first_name + ' ' + res.user.data.last_name,
-            photo: sails.config.imagePath + res.user.data.photo
+            phone: res.user.data.phone,
+            photo: sails.config.sailsImagePath + res.user.data.photo
           }
         }
         
