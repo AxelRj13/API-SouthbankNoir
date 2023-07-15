@@ -35,7 +35,12 @@ module.exports.routes = {
 
   // Promo
   'POST /api/v1/promo/get-banner': { action: 'promo/get-homepage-banner' },
-  'POST /api/v1/promo/get': { action: 'promo/list' },
+  'POST /api/v1/promo/get': { action: 'promo/get-active-promo' },
+  'POST /api/v1/promo/details': { action: 'promo/get-promo-details' },
+
+  // News / Announcement
+  'POST /api/v1/news/get': { action: 'news/get-active-news' },
+  'POST /api/v1/news/details': { action: 'news/get-news-details' },
 
   // Event
   'POST /api/v1/event/today/get': { action: 'event/get-today-event' },
@@ -53,4 +58,10 @@ module.exports.routes = {
 
   // Profile
   'POST /api/v1/profile/update': { action: 'profile/update-profile' },
+
+  // Coupon
+  'POST /api/v1/coupon/get': { action: 'coupon/get-active-coupons' },
+  'POST /api/v1/coupon/details': { action: 'coupon/get-coupon-details' },
+  'POST /api/v1/my-coupon/details': { action: 'coupon/get-my-coupon-details' },
+  'POST /api/v1/coupon/buy-coupon': { action: 'coupon/buy-coupon' },
 };

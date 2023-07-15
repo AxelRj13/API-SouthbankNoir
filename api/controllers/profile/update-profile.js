@@ -1,33 +1,7 @@
 module.exports = {
     friendlyName: 'Update profile member',
-    inputs: {
-        first_name: {
-            type: 'string',
-            required: true
-        },
-        last_name: {
-            type: 'string',
-            required: true
-        },
-        phone: {
-            type: 'string',
-            required: true
-        },
-        date_of_birth: {
-            type: 'string',
-            required: true
-        },
-        city: {
-            type: 'string',
-            required: true
-        },
-        gender: {
-            type: 'string',
-            required: true
-        }
-    },
   
-    fn: async function ({first_name, last_name, phone, date_of_birth, city, gender}) {
+    fn: async function () {
         // upload file
         let result = await uploadFile(this.req);
         if (result) {
