@@ -29,17 +29,28 @@ module.exports.http = {
     *                                                                          *
     ***************************************************************************/
 
-    // order: [
-    //   'cookieParser',
-    //   'session',
-    //   'bodyParser',
-    //   'compress',
-    //   'poweredBy',
-    //   'router',
-    //   'www',
-    //   'favicon',
-    // ],
+    order: [
+      'cookieParser',
+      'session',
+      'bodyParser',
+      'compress',
+      'poweredBy',
+      'router',
+      'www',
+      'favicon',
+      'myRequestLogger'
+    ],
 
+    myRequestLogger: function (req, res, next) {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+      res.header('Allow', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+      res.header('member_id', '');
+      res.header('user_login_name', '');
+      res.header('is_mobile', '');
+      return next();
+    },
 
     /***************************************************************************
     *                                                                          *
