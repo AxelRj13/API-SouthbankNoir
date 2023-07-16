@@ -18,7 +18,7 @@
  * https://sailsjs.com/support
  */
 
-var PRODUCTION_CONFIG = require('./env/production');
+var PRODUCTION_CONFIG = require('./production');
 //--------------------------------------------------------------------------
 // /\  Start with your production config, even if it's just a guess for now,
 // ||  then configure your staging environment afterwards.
