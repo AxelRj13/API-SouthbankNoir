@@ -34,6 +34,6 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
     }
   },
   imagePath: 'http://southbank-noir.local/upload/img/',
-  sailsImagePath: 'http://localhost:1340/images/',
+  sailsImagePath: 'http://206.189.39.51/images/',
   port: 8888
 });
