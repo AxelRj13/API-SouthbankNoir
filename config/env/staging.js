@@ -25,7 +25,7 @@ var PRODUCTION_CONFIG = require('./production');
 //     (That way, all you need to do in this file is set overrides.)
 //--------------------------------------------------------------------------
 
-module.exports = Object.assign({}, PRODUCTION_CONFIG, {
+module.exports = {
 
   datastores: {
     default: {
@@ -33,61 +33,7 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
       url: 'postgresql://deniel:Nerrazurri7@206.189.39.51:5432/staging-southbanknoir'
     }
   },
-
-  sockets: Object.assign({}, PRODUCTION_CONFIG.sockets, {
-
-    onlyAllowOrigins: [
-      'http://localhost:1340',
-      // 'https://example-staging.herokuapp.com',
-      // 'http://example-staging.herokuapp.com',
-      // 'https://staging.example.com',
-      // 'http://staging.example.com',
-    ],
-    //--------------------------------------------------------------------------
-    // /\  Hard-code a staging-only override for allowed origins.
-    // ||  (or set this array via JSON-encoded system env var)
-    //     ```
-    //     sails_sockets__onlyAllowOrigins='["http://localhost:1340", "…"]'
-    //     ```
-    //--------------------------------------------------------------------------
-
-    // url: 'redis://shared:some_password_everyone_knows@bigsquid.redistogo.com:9562/',
-    //--------------------------------------------------------------------------
-    // /\  Hard-code your staging Redis server's `url`.
-    // ||  (or use system env var: `sails_sockets__url`)
-    //--------------------------------------------------------------------------
-  }),
-
-  session: Object.assign({}, PRODUCTION_CONFIG.session, {
-    // url: 'redis://shared:some_password_everyone_knows@bigsquid.redistogo.com:9562/staging-sessions',
-    //--------------------------------------------------------------------------
-    // /\  Hard-code your staging Redis server's `url` again here.
-    // ||  (or use system env var: `sails_session__url`)
-    //--------------------------------------------------------------------------
-  }),
-
-  custom: Object.assign({}, PRODUCTION_CONFIG.custom, {
-
-    baseUrl: 'https://staging.example.com',
-    //--------------------------------------------------------------------------
-    // /\  Hard-code the base URL where your staging environment is hosted.
-    // ||  (or use system env var: `sails_custom__baseUrl`)
-    //--------------------------------------------------------------------------
-
-    internalEmailAddress: 'support+staging@example.com',
-    //--------------------------------------------------------------------------
-    // /\  Hard-code the email address that should receive support/contact form
-    // ||  messages in staging (or use `sails_custom__internalEmailAddress`)
-    //--------------------------------------------------------------------------
-
-    // sendgridSecret: 'SG.fake.3e0Bn0qSQVnwb1E4qNPz9JZP5vLZYqjh7sn8S93oSHU',
-    // stripeSecret: 'sk_sandbox__fake_Nfgh82401348jaDa3lkZ0d9Hm',
-    // stripePublishableKey: 'pk_sandbox__fake_fKd3mZJs1mlYrzWt7JQtkcRb',
-    //--------------------------------------------------------------------------
-    // /\  Hard-code credentials to use in staging for other 3rd party APIs, etc.
-    // ||  (or use system environment variables prefixed with "sails_custom__")
-    //--------------------------------------------------------------------------
-
-  })
-
-});
+  imagePath: 'http://southbank-noir.local/upload/img/',
+  sailsImagePath: 'http://localhost:1340/images/',
+  port: 8899
+};
