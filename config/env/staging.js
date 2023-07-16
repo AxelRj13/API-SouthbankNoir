@@ -18,14 +18,14 @@
  * https://sailsjs.com/support
  */
 
-var PRODUCTION_CONFIG = require('./production');
+var PRODUCTION_CONFIG = require('./env/production');
 //--------------------------------------------------------------------------
 // /\  Start with your production config, even if it's just a guess for now,
 // ||  then configure your staging environment afterwards.
 //     (That way, all you need to do in this file is set overrides.)
 //--------------------------------------------------------------------------
 
-module.exports = {
+module.exports = Object.assign({}, PRODUCTION_CONFIG, {
 
   datastores: {
     default: {
@@ -36,4 +36,4 @@ module.exports = {
   imagePath: 'http://southbank-noir.local/upload/img/',
   sailsImagePath: 'http://localhost:1340/images/',
   port: 8899
-};
+});
