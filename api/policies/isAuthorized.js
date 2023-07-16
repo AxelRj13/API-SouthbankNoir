@@ -24,14 +24,14 @@ module.exports = async function(req, res, next) {
 
 	var userRecord = await Member.findOne({
 		select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo'],
-		where: {id: req.headers.member_id, status: 1}
+		where: {id: req.headers['member-id'], status: 1}
 	});
 
 	jwToken.verify(token, function(err, decoded) {
 		var returnedToken = token;
 		var decodedToken = decoded;
 		if (err) {
-			if (req.headers['is_mobile'] && err.expiredAt < new Date().getTime()) {
+			if (req.headers['is-mobile'] && err.expiredAt < new Date().getTime()) {
 				// refresh token if expired
 				returnedToken = jwToken.sign(userRecord, req.headers['x-secret-token']);
 				jwToken.verify(returnedToken.token, function(err, decoded) {

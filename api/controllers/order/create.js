@@ -11,7 +11,7 @@ module.exports = {
     fn: async function ({payload}) {
         var userId = this.req.headers.user_id;
         var storeId = this.req.headers.store_id;
-        var userLoginName = this.req.headers.user_login_name;
+        var userLoginName = this.req.headers['user-login-name'];
         if (!storeId) {
             return sails.helpers.convertResult(0, 'Harus merupakan user dari suatu toko untuk dapat membuat order.');
         }

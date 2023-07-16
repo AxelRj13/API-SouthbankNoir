@@ -21,7 +21,7 @@ module.exports = {
                 cm.id = $3 AND
                 cm.member_id = $4 AND 
                 cm.status = $2
-        `, [sails.config.imagePath, 1, id, this.req.headers.member_id]);
+        `, [sails.config.imagePath, 1, id, this.req.headers['member-id']]);
 
         if (result.rows.length > 0) {
             if (result.rows[0].value > 0) {

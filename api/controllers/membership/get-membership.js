@@ -1,7 +1,7 @@
 module.exports = {
     friendlyName: 'Get Membership based on user logged in',
     fn: async function () {
-      let memberId = this.req.headers.member_id;
+      let memberId = this.req.headers['member-id'];
       let currentMembership = await sails.sendNativeQuery(`
         SELECT um.points, um.total_spent, mt.name, mt.total_spent_max, (mt.total_spent_max - um.total_spent) as diff_next_tier
         FROM user_memberships um

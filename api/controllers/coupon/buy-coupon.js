@@ -8,7 +8,7 @@ module.exports = {
     },
   
     fn: async function ({coupon_id}) {
-        var memberId = this.req.headers.member_id;
+        var memberId = this.req.headers['member-id'];
         let currDate = new Date();
         // validate coupon
         let coupon = await sails.sendNativeQuery(`

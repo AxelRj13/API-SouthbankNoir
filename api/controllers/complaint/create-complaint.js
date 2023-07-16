@@ -20,8 +20,8 @@ module.exports = {
     },
   
     fn: async function ({type, date, store, description}) {
-        var memberId = this.req.headers.member_id;
-        var memberName = this.req.headers.user_login_name;
+        var memberId = this.req.headers['member-id'];
+        var memberName = this.req.headers['user-login-name'];
         let stores = await sails.sendNativeQuery(`SELECT name FROM stores WHERE id = $1 AND status = $2`, [store, 1]);
         if (stores.rows.length <= 0) {
             return sails.helpers.convertResult(0, 'Store not found / not active anymore.');

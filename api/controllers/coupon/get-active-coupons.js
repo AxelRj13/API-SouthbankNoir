@@ -6,7 +6,7 @@ module.exports = {
             SELECT points
             FROM user_memberships
             WHERE member_id = $1 AND status = $2
-        `, [this.req.headers.member_id, 1]);
+        `, [this.req.headers['member-id'], 1]);
         if (member.rows.length > 0) {
             memberPoints = member.rows[0].points;
         }
@@ -46,7 +46,7 @@ module.exports = {
                 c.validity_date >= $2 AND 
                 cm.member_id = $4
             ORDER BY c.validity_date
-        `, [1, new Date(), sails.config.imagePath, this.req.headers.member_id]);
+        `, [1, new Date(), sails.config.imagePath, this.req.headers['member-id']]);
 
         if (myCoupons.rows.length > 0) {
             result.my_coupons = myCoupons.rows;

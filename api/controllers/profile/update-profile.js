@@ -14,7 +14,7 @@ module.exports = {
 
 async function uploadFile(input) {
     return new Promise((resolve, reject) => {
-        let memberId = input.headers.member_id;
+        let memberId = input.headers['member-id'];
         let currentDate = new Date();
         let fileName = 'profile_'+memberId+'_'+currentDate.getDate()+(currentDate.getMonth()+1)+currentDate.getFullYear()+currentDate.getHours()+currentDate.getMinutes();
         input.file('file').upload({
