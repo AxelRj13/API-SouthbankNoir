@@ -52,6 +52,7 @@ module.exports.routes = {
 
   // Store
   'POST /api/v1/store/get': { action: 'store/get-active-stores' },
+  'POST /api/v1/store/details': { action: 'store/get-store-details' },
 
   // Contact Us
   'POST /api/v1/contactus/get': { action: 'contactus/get-active-contact' },
