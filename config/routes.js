@@ -65,4 +65,7 @@ module.exports.routes = {
   'POST /api/v1/coupon/details': { action: 'coupon/get-coupon-details' },
   'POST /api/v1/my-coupon/details': { action: 'coupon/get-my-coupon-details' },
   'POST /api/v1/coupon/buy-coupon': { action: 'coupon/buy-coupon' },
+
+  // Table
+  'POST /api/v1/table/get': { action: 'table/get-table-layout' },
 };
