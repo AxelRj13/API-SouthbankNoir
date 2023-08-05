@@ -7,21 +7,33 @@ module.exports = {
         },
         date: {
           type: 'string',
-          required: true
+          required: false
         },
     },
     fn: async function ({store_id, date}) {
         var result = [];
+        if (!date) {
+            date = new Date();
+        }
         let layouts = await sails.sendNativeQuery(`
-            SELECT id, name, level, $3 || image as "image"
-            FROM table_blueprints
-            WHERE store_id = $1 AND status = $2
+            SELECT tb.id, tb.name, tb.level, $3 || tb.image as "image"
+            FROM table_blueprints tb
+            WHERE tb.store_id = $1 AND tb.status = $2
         `, [store_id, 1, sails.config.imagePath]);
 
         if (layouts.rows.length > 0) {
-            if (!date) {
-                date = new Date();
-            }
+            let storeAndDateInfo = await sails.sendNativeQuery(`
+                SELECT name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display
+                FROM stores
+                WHERE id = $1
+            `, [store_id, date]);
+
+            result = {
+                store: storeAndDateInfo.rows[0].store_name,
+                date_display: storeAndDateInfo.rows[0].date_display,
+                date: date,
+                data: []
+            };
             for (const layoutData of layouts.rows) {
                 let tables = await sails.sendNativeQuery(`
                     SELECT t.id, 
@@ -58,7 +70,7 @@ module.exports = {
                         image: layoutData.image,
                         tables: tables.rows
                     };
-                    result.push(resultTemp);
+                    result.data.push(resultTemp);
                 }
             }
 
