@@ -3,7 +3,7 @@ module.exports = {
   
     fn: async function () {
         // upload file
-        let result = await uploadFile(this.req);
+        let result = await uploadFileAndUpdateProfile(this.req);
         if (result) {
             return result;
         } else {
@@ -12,7 +12,7 @@ module.exports = {
     }
 };
 
-async function uploadFile(input) {
+async function uploadFileAndUpdateProfile(input) {
     return new Promise((resolve, reject) => {
         let memberId = input.headers['member-id'];
         let currentDate = new Date();

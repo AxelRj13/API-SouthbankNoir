@@ -23,13 +23,14 @@ module.exports = {
 
         if (layouts.rows.length > 0) {
             let storeAndDateInfo = await sails.sendNativeQuery(`
-                SELECT name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display
+                SELECT id, name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display
                 FROM stores
                 WHERE id = $1
             `, [store_id, date]);
 
             result = {
-                store: storeAndDateInfo.rows[0].store_name,
+                store_id: storeAndDateInfo.rows[0].id,
+                store_name: storeAndDateInfo.rows[0].name,
                 date_display: storeAndDateInfo.rows[0].date_display,
                 date: date,
                 data: []
@@ -56,6 +57,7 @@ module.exports = {
                     LEFT JOIN booking_details bd ON t.id = bd.table_id
                     LEFT JOIN bookings b ON bd.booking_id = b.id
                     WHERE t.table_blueprint_id = $1 AND t.status = $2
+                    ORDER BY t.table_no ASC
                 `, [layoutData.id, 1, date, 2]);
 
                 if (tables.rows.length > 0) {

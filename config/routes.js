@@ -68,4 +68,7 @@ module.exports.routes = {
 
   // Table
   'POST /api/v1/table/get': { action: 'table/get-table-layout' },
+
+  // Booking
+  'POST /api/v1/booking/create': { action: 'booking/create-booking' },
 };

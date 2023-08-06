@@ -11,6 +11,7 @@ module.exports = {
             SELECT e.id, 
                 e.name, 
                 e.artist, 
+                s.id as store_id,
                 s.name as store_name, 
                 $2 || e.image as image, 
                 to_char(start_date, 'Dy, DD Mon YYYY') as date_start, 
