@@ -9,9 +9,9 @@ module.exports = {
     },
   
     fn: async function ({payload}) {
-        var memberId = this.req.headers['member-id'];
-        var userLoginName = this.req.headers['user-login-name'];
-        var storeId = payload.store_id;
+        let memberId = this.req.headers['member-id'];
+        let userLoginName = this.req.headers['user-login-name'];
+        let storeId = payload.store_id;
 
         // generate no order
         var currentDate = new Date();
