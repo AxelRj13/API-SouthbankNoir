@@ -97,7 +97,14 @@ module.exports = {
       }
 
       var jwTokenSign = jwToken.sign(userRecord, this.req.headers['x-secret-token']);
-      return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, undefined, jwTokenSign);
+      let data = {
+          id: jwTokenSign.user.data.id,
+          email: jwTokenSign.user.data.email,
+          name: jwTokenSign.user.data.first_name + ' ' + jwTokenSign.user.data.last_name,
+          phone: jwTokenSign.user.data.phone,
+          photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
+        }
+      return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, data, jwTokenSign);
     }
   };
   

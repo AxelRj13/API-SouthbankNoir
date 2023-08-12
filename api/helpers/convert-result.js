@@ -29,14 +29,7 @@ module.exports = {
       response.status = status;
       response.message = message;
       response.data = [];
-      response.user = {
-        token: res.token,
-        id: res.user.data.id,
-        email: res.user.data.email,
-        name: res.user.data.first_name + ' ' + res.user.data.last_name,
-        phone: res.user.data.phone,
-        photo: sails.config.sailsImagePath + res.user.data.photo
-      }
+      response.token = res.token;
 
       if (status) {
         if (!message) {
