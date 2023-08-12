@@ -28,7 +28,7 @@ module.exports = {
       var response = {};
       response.status = status;
       response.message = message;
-      response.data = {};
+      response.data = [];
       response.user = {
         token: res.token,
         id: res.user.data.id,
