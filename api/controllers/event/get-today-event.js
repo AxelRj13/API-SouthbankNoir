@@ -12,7 +12,7 @@ module.exports = {
         if (events.rows.length > 0) {
             return sails.helpers.convertResult(1, '', events.rows, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

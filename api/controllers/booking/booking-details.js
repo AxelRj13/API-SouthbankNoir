@@ -42,7 +42,7 @@ module.exports = {
                 qty: '',
                 total_discount: bookings.rows[0].discount ? 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].discount)) : '-',
                 total_payment: 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].subtotal)),
-                data: []
+                details: []
             };
 
             var tableQty = 0;
@@ -63,14 +63,14 @@ module.exports = {
                     for (const bookingDetailData of bookingDetails.rows) {
                         bookingDetailData.minimum_spend = 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookingDetailData.minimum_spend));
                         bookingDetailData.total = 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookingDetailData.total));
-                        result.data.push(bookingDetailData);
+                        result.details.push(bookingDetailData);
                     }
                 }
             }
             result.qty = tableQty + ' Table(s)';
             return sails.helpers.convertResult(1, '', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

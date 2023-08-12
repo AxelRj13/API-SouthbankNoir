@@ -10,7 +10,7 @@ module.exports = {
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', 'https://api.whatsapp.com/send/?phone='+result.rows[0].value+'&text&type=phone_number&app_absent=0', this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

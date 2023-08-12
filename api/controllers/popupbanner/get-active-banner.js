@@ -13,7 +13,7 @@ module.exports = {
             popupBanner.rows[0].image = sails.config.imagePath + popupBanner.rows[0].image;
             return sails.helpers.convertResult(1, '', popupBanner.rows, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

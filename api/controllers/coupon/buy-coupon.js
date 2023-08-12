@@ -19,7 +19,7 @@ module.exports = {
                 c.id = $3
         `, [1, currDate, coupon_id]);
         if (coupon.rows.length <= 0) {
-            return sails.helpers.convertResult(0, 'Coupon has expired / not exist anymore, please browse another voucher.');
+            return sails.helpers.convertResult(0, 'Coupon has expired / not exist anymore, please browse another voucher.', null, this.res);
         } else {
             // check if member's point sufficient
             let userPoint = await sails.sendNativeQuery(`
@@ -34,7 +34,7 @@ module.exports = {
             }
 
             if (point < coupon.rows[0].price) {
-                return sails.helpers.convertResult(0, 'Purchase failed, your point is insufficient.');
+                return sails.helpers.convertResult(0, 'Purchase failed, your point is insufficient.', null, this.res);
             }
         }
 
@@ -62,9 +62,9 @@ module.exports = {
                 WHERE member_id = $2 AND status = $3
             `, [coupon.rows[0].price, memberId, 1]);
 
-            return sails.helpers.convertResult(1, 'Coupon successfully purchased.');
+            return sails.helpers.convertResult(1, 'Coupon successfully purchased.', null, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Coupon purchase failed, please try again.');
+            return sails.helpers.convertResult(0, 'Coupon purchase failed, please try again.', null, this.res);
         }
     }
 };

@@ -26,7 +26,7 @@ module.exports = {
             }
             return sails.helpers.convertResult(1, '', result.rows, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

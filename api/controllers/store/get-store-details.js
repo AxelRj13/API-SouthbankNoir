@@ -78,10 +78,10 @@ module.exports = {
                 result.operational_hours = operationalHours.rows;
                 return sails.helpers.convertResult(1, '', result, this.res);
             } else {
-                return sails.helpers.convertResult(0, 'Not Found');
+                return sails.helpers.convertResult(0, 'Not Found', null, this.res);
             }
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

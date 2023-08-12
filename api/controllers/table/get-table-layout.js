@@ -33,7 +33,7 @@ module.exports = {
                 store_name: storeAndDateInfo.rows[0].name,
                 date_display: storeAndDateInfo.rows[0].date_display,
                 date: date,
-                data: []
+                list: []
             };
             for (const layoutData of layouts.rows) {
                 let tables = await sails.sendNativeQuery(`
@@ -72,13 +72,13 @@ module.exports = {
                         image: layoutData.image,
                         tables: tables.rows
                     };
-                    result.data.push(resultTemp);
+                    result.list.push(resultTemp);
                 }
             }
 
             return sails.helpers.convertResult(1, '', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

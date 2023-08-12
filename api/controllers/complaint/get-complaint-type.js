@@ -11,7 +11,7 @@ module.exports = {
         if (complaintTypes.rows.length > 0) {
             return sails.helpers.convertResult(1, '', complaintTypes.rows, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

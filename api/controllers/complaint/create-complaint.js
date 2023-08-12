@@ -38,6 +38,6 @@ module.exports = {
             VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $7, $8, $8)
         `, [memberId, stores.rows[0].name, memberName, complaintType.rows[0].name, date, description, memberId, new Date()]);
 
-        return sails.helpers.convertResult(1, 'Complaint successfully created.');
+        return sails.helpers.convertResult(1, 'Complaint successfully created.', null, this.res);
     }
   };

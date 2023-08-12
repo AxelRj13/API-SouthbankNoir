@@ -25,36 +25,32 @@ module.exports = {
     },
   
     fn: async function ({ status, message, data, res }) {
+      var response = {};
+      response.status = status;
+      response.message = message;
+      response.data = {};
+      response.user = {
+        token: res.token,
+        id: res.user.data.id,
+        email: res.user.data.email,
+        name: res.user.data.first_name + ' ' + res.user.data.last_name,
+        phone: res.user.data.phone,
+        photo: sails.config.sailsImagePath + res.user.data.photo
+      }
+
       if (status) {
         if (!message) {
-          message = undefined;
+          message = "OK";
         }
-  
-        var user = undefined;
-        if (res) {
-          user = {
-            token: res.token,
-            id: res.user.data.id,
-            email: res.user.data.email,
-            name: res.user.data.first_name + ' ' + res.user.data.last_name,
-            phone: res.user.data.phone,
-            photo: sails.config.sailsImagePath + res.user.data.photo
-          }
+        response.status = status;
+        response.message = message;
+        if (data) {
+          response.data = data;
+        } else {
+          response.data = [];
         }
-        
-        return {
-          status: status,
-          message: message,
-          count: data ? data.length : undefined,
-          data: data,
-          user: user
-        };
-      } else {
-        return {
-          status: status,
-          message: message
-        };
       }
+      return response;
     }
   };
   

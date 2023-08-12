@@ -132,3 +132,5 @@ lib-cov
 *.out
 *.pid
 
+assets/images/profile
+!assets/images/profile/noprofileimage.png

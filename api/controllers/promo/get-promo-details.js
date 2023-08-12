@@ -22,7 +22,7 @@ module.exports = {
             result.rows[0].minimum_spend = 'Rp. ' + await sails.helpers.numberFormat(parseInt(result.rows[0].minimum_spend));
             return sails.helpers.convertResult(1, '', result.rows[0], this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found');
+            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
         }
     }
   };

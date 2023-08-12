@@ -54,7 +54,7 @@ module.exports = {
 
         let member = await sails.sendNativeQuery(`SELECT phone FROM members WHERE id = $1 AND status = $2`, [memberId, 1]);
         if (member.rows.length <= 0) {
-            return sails.helpers.convertResult(0, 'Member Not Found / Inactive');
+            return sails.helpers.convertResult(0, 'Member Not Found / Inactive', null, this.res);
         }
         var cpPhone = member.rows[0].phone;
 
@@ -112,6 +112,6 @@ module.exports = {
         //     `, [calcPoint, new Date(), payload.customer_id]);
         // }
 
-        return sails.helpers.convertResult(1, 'Booking Successfully Created');
+        return sails.helpers.convertResult(1, 'Booking Successfully Created', null, this.res);
     }
   };
