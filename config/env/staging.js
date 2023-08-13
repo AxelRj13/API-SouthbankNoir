@@ -33,7 +33,7 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
       url: 'postgresql://deniel:Nerrazurri7@206.189.39.51:5432/staging-southbanknoir'
     }
   },
-  imagePath: 'http://southbank-noir.local/upload/img/',
+  imagePath: 'http://southbank.dn7store.com/upload/img/',
   sailsImagePath: 'http://206.189.39.51/images/',
   port: 8888
 });
