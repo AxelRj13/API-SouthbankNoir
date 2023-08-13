@@ -29,7 +29,10 @@ module.exports = {
       response.status = status;
       response.message = message;
       response.data = [];
-      response.token = res.token;
+      response.token = null;
+      if (res) {
+        response.token = res.token;
+      }
 
       if (status) {
         if (!message) {

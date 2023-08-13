@@ -55,10 +55,12 @@ module.exports = {
       });
   
       if (userRecord) {
-        return this.res.status(400).send('Email is already exist, please try with another email.');
+        return sails.helpers.convertResult(0, 'Email is already exist, please try with another email.', null, null);
+        // return this.res.status(400).send('Email is already exist, please try with another email.');
       } else {
         if (password !== confirm_password) {
-            return this.res.status(400).send('Password doesn\'t match.');
+          return sails.helpers.convertResult(0, 'Password doesn\'t match.', null, null);
+          // return this.res.status(400).send('Password doesn\'t match.');
         } else {
             const newMember = await Member.create({
               first_name: first_name,
@@ -81,7 +83,14 @@ module.exports = {
             this.req.session.userId = newMember.id;
     
             var jwTokenSign = jwToken.sign(newMember, this.req.headers['x-secret-token']);
-            return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, undefined, jwTokenSign);
+            let data = {
+              id: jwTokenSign.user.data.id,
+              email: jwTokenSign.user.data.email,
+              name: jwTokenSign.user.data.first_name + ' ' + jwTokenSign.user.data.last_name,
+              phone: jwTokenSign.user.data.phone,
+              photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
+            }
+            return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, data, jwTokenSign);
         }
       }
     }

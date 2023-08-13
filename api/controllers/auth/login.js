@@ -61,7 +61,8 @@ module.exports = {
   
       // If there was no matching user, respond thru the "badCombo" exit.
       if (!userRecord) {
-        return this.res.status(401).send('User is not exist / not active anymore');
+        return sails.helpers.convertResult(0, 'User is not exist / not active anymore', null, null);
+        // return this.res.status(401).send('User is not exist / not active anymore');
       }
   
       // If the password doesn't match, then also exit thru "badCombo".
@@ -98,12 +99,12 @@ module.exports = {
 
       var jwTokenSign = jwToken.sign(userRecord, this.req.headers['x-secret-token']);
       let data = {
-          id: jwTokenSign.user.data.id,
-          email: jwTokenSign.user.data.email,
-          name: jwTokenSign.user.data.first_name + ' ' + jwTokenSign.user.data.last_name,
-          phone: jwTokenSign.user.data.phone,
-          photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
-        }
+        id: jwTokenSign.user.data.id,
+        email: jwTokenSign.user.data.email,
+        name: jwTokenSign.user.data.first_name + ' ' + jwTokenSign.user.data.last_name,
+        phone: jwTokenSign.user.data.phone,
+        photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
+      }
       return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, data, jwTokenSign);
     }
   };
