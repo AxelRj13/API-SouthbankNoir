@@ -42,7 +42,7 @@ module.exports = {
             JOIN stores s ON e.store_id = s.id
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
-                date(e.end_date) >= $3
+                e.end_date >= $3
         `;
 
         if (keyword) {

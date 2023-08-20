@@ -8,11 +8,11 @@ module.exports = {
                 s.id as store_id,
                 s.name as store_name, 
                 $2 || e.image as image, 
-                to_char(start_date, 'Dy, DD Mon YYYY') as date_start, 
-                to_char(start_date, 'HH24:MI') as time_start,
+                to_char(e.start_date, 'Dy, DD Mon YYYY') as date_start, 
+                to_char(e.start_date, 'HH24:MI') as time_start,
                 (
-                    CASE WHEN start_date > $3
-                    THEN to_char(start_date, 'YYYY-MM-DD')
+                    CASE WHEN e.start_date > $3
+                    THEN to_char(e.start_date, 'YYYY-MM-DD')
                     ELSE to_char($3, 'YYYY-MM-DD')
                     END
                 ) as reservation_date,
@@ -37,7 +37,7 @@ module.exports = {
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
                 date(e.start_date) = $3
-        `, [1, sails.config.imagePath, new Date(), 2]);
+        `, [1, sails.config.imagePath, new Date().toJSON().slice(0, 10), 2]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);
