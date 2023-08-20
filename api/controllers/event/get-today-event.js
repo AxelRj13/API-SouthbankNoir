@@ -1,6 +1,10 @@
 module.exports = {
     friendlyName: 'Get active today events',
     fn: async function () {
+        var date = new Date();
+        date.setTime(date.getTime() + 8 * 60 * 60 * 1000);
+        let dateFormatted = date.toJSON().slice(0, 10);
+
         let result = await sails.sendNativeQuery(`
             SELECT e.id, 
                 e.name, 
@@ -37,7 +41,7 @@ module.exports = {
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
                 date(e.start_date) = $3
-        `, [1, sails.config.imagePath, new Date().toJSON().slice(0, 10), 2]);
+        `, [1, sails.config.imagePath, dateFormatted, 2]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);
