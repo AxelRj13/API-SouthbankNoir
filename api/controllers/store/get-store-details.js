@@ -28,7 +28,8 @@ module.exports = {
         if (store.rows.length > 0) {
             result.store = store.rows;
             let operationalHours = await sails.sendNativeQuery(`
-                SELECT INITCAP(day) as "day",
+                SELECT 
+                    INITCAP(day) as "day",
                     (
                         CASE WHEN status = 0 
                         THEN 'CLOSED'
@@ -43,7 +44,7 @@ module.exports = {
             if (operationalHours.rows.length > 0) {
                 
                 let date = new Date();
-                let day = date.toLocaleDateString('id-ID', { weekday: 'long' });
+                let day = date.toLocaleDateString('en-US', { weekday: 'long' });
 
                 for (const data of operationalHours.rows) {
 
