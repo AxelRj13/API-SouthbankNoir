@@ -9,7 +9,7 @@ module.exports = {
         WHERE um.member_id = $1 AND um.status = $2 AND mt.status = $2
       `, [memberId, 1]);
 
-      var result = currentMembership.rows;
+      var result;
       if (currentMembership.rows.length <= 0) {
         // default tier
         let basicMembership = await sails.sendNativeQuery(`
@@ -30,9 +30,10 @@ module.exports = {
           SELECT mt.name
           FROM membership_tiers mt
           WHERE mt.status = $1 AND (mt.total_spent_min - $2) = 1;
-        `, [1, result[0].total_spent_max]);
+        `, [1, currentMembership.rows[0].total_spent_max]);
 
-        result[0].diff_next_tier = 'Rp. ' + await sails.helpers.numberFormat(result[0].total_spent_max - result[0].total_spent) + ' left to reach ' + nextTier.rows[0].name;
+        currentMembership.rows[0].diff_next_tier = 'Rp. ' + await sails.helpers.numberFormat(currentMembership.rows[0].total_spent_max - currentMembership.rows[0].total_spent) + ' left to reach ' + nextTier.rows[0].name;
+        result = currentMembership.rows[0];
       }
 
       return sails.helpers.convertResult(1, '', result, this.res);
