@@ -70,7 +70,7 @@ module.exports = {
               date_of_birth: date_of_birth,
               city: city.toUpperCase(),
               gender: gender.toUpperCase(),
-              photo: 'noprofileimage.png',
+              photo: 'profile/noprofileimage.png',
               status: 1,
               password: bcrypt.hashSync(password, 10),
               created_by: 1,
