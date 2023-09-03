@@ -55,7 +55,7 @@ module.exports = {
       // (note that we lowercase it to ensure the lookup is always case-insensitive,
       // regardless of which database we're using)
       var userRecord = await Member.findOne({
-        select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo', 'phone'],
+        select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo', 'phone', 'gender', 'city', 'date_of_birth'],
         where: {email: email.toLowerCase(), status: 1}
       });
   
@@ -101,8 +101,12 @@ module.exports = {
       let data = {
         id: jwTokenSign.user.data.id,
         email: jwTokenSign.user.data.email,
-        name: jwTokenSign.user.data.first_name + ' ' + jwTokenSign.user.data.last_name,
+        first_name: jwTokenSign.user.data.first_name,
+        last_name: jwTokenSign.user.data.last_name,
         phone: jwTokenSign.user.data.phone,
+        gender: jwTokenSign.user.data.gender,
+        city: jwTokenSign.user.data.city,
+        date_of_birth: new Date(jwTokenSign.user.data.date_of_birth).toJSON().slice(0, 10),
         photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
       }
       return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, data, jwTokenSign);
