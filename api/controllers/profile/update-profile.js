@@ -5,7 +5,25 @@ module.exports = {
         // upload file
         let result = await uploadFileAndUpdateProfile(this.req);
         if (result) {
-            return await sails.helpers.convertResult(1, 'Profile successfully updated.', null, this.res)
+            let userData = await sails.sendNativeQuery(`
+                SELECT *
+                FROM members
+                WHERE id = $1
+            `, [this.req.headers['member-id']]);
+
+            let data = {
+                id: userData.rows[0].id,
+                email: userData.rows[0].email,
+                first_name: userData.rows[0].first_name,
+                last_name: userData.rows[0].last_name,
+                phone: userData.rows[0].phone,
+                gender: userData.rows[0].gender,
+                city: userData.rows[0].city,
+                date_of_birth: new Date(userData.rows[0].date_of_birth).toJSON().slice(0, 10),
+                photo: sails.config.sailsImagePath + userData.rows[0].photo
+            };
+            
+            return await sails.helpers.convertResult(1, 'Profile successfully updated.', data, this.res)
         } else {
             return await sails.helpers.convertResult(0, 'Profile update failed, please check your file upload.', null, this.res);
         }
@@ -15,7 +33,6 @@ module.exports = {
 async function uploadFileAndUpdateProfile(input) {
     return new Promise((resolve, reject) => {
         let memberId = input.headers['member-id'];
-        let currentDate = new Date();
         let fileName = 'profile_'+memberId;
         input.file('file').upload({
             dirname: require('path').resolve(sails.config.appPath, 'assets/images/profile'),
