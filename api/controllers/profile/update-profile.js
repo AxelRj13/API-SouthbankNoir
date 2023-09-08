@@ -49,31 +49,44 @@ async function uploadFileAndUpdateProfile(input) {
             if (err) {
                 sails.log(err.message);
             }
-            let image;
             if (uploadedFiles.length > 0) {
                 sails.log(uploadedFiles[0]);
-                image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
+                let image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
+                await sails.sendNativeQuery(`
+                    UPDATE members
+                    SET first_name = $1,
+                        last_name = $2,
+                        phone = $3,
+                        date_of_birth = $4,
+                        city = $5,
+                        gender = $6,
+                        photo = $7,
+                        updated_by = $8,
+                        updated_at = $9
+                    WHERE id = $8
+                `, [
+                    input.body.first_name, input.body.last_name, input.body.phone, 
+                    input.body.date_of_birth, input.body.city.toUpperCase(), input.body.gender.toUpperCase(), 
+                    image, memberId, new Date()
+                ]);
             } else {
-                image = 'profile/noprofileimage.png';
+                await sails.sendNativeQuery(`
+                    UPDATE members
+                    SET first_name = $1,
+                        last_name = $2,
+                        phone = $3,
+                        date_of_birth = $4,
+                        city = $5,
+                        gender = $6,
+                        updated_by = $7,
+                        updated_at = $8
+                    WHERE id = $7
+                `, [
+                    input.body.first_name, input.body.last_name, input.body.phone, 
+                    input.body.date_of_birth, input.body.city.toUpperCase(), input.body.gender.toUpperCase(), 
+                    memberId, new Date()
+                ]);
             }
-
-            await sails.sendNativeQuery(`
-                UPDATE members
-                SET first_name = $1,
-                    last_name = $2,
-                    phone = $3,
-                    date_of_birth = $4,
-                    city = $5,
-                    gender = $6,
-                    photo = $7,
-                    updated_by = $8,
-                    updated_at = $9
-                WHERE id = $8
-            `, [
-                input.body.first_name, input.body.last_name, input.body.phone, 
-                input.body.date_of_birth, input.body.city.toUpperCase(), input.body.gender.toUpperCase(), 
-                image, memberId, new Date()
-            ]);
 
             resolve(true);
         });
