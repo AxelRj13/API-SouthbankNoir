@@ -19,7 +19,7 @@ module.exports = {
                 phone: userData.rows[0].phone,
                 gender: userData.rows[0].gender,
                 city: userData.rows[0].city,
-                date_of_birth: new Date(userData.rows[0].date_of_birth).toJSON().slice(0, 10),
+                date_of_birth: await sails.helpers.convertDate(userData.rows[0].date_of_birth),
                 photo: sails.config.sailsImagePath + userData.rows[0].photo
             };
             

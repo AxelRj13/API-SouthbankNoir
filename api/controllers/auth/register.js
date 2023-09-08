@@ -91,7 +91,7 @@ module.exports = {
               phone: jwTokenSign.user.data.phone,
               gender: jwTokenSign.user.data.gender,
               city: jwTokenSign.user.data.city,
-              date_of_birth: new Date(jwTokenSign.user.data.date_of_birth).toJSON().slice(0, 10),
+              date_of_birth: await sails.helpers.convertDate(jwTokenSign.user.data.date_of_birth),
               photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
             }
             return sails.helpers.convertResult(jwTokenSign.status, jwTokenSign.message, data, jwTokenSign);
