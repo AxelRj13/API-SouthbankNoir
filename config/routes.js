@@ -23,6 +23,7 @@ module.exports.routes = {
   // Auth
   'POST /api/v1/auth/login': { action: 'auth/login' },
   'POST /api/v1/auth/register': { action: 'auth/register' },
+  'POST /api/v1/auth/check-email': { action: 'auth/check-email' },
 
   // Splashscreen
   'POST /api/v1/splashscreen/get': { action: 'splashscreen/get-active-splashscreen' },
