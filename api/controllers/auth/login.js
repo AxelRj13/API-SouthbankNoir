@@ -12,7 +12,12 @@ module.exports = {
       password: {
         description: 'The unencrypted password to try in this attempt, e.g. "passwordlol".',
         type: 'string',
-        required: true
+        required: false
+      },
+      is_via_google: {
+        description: 'To flag whether it is from google or not',
+        type: 'boolean',
+        required: false
       },
       rememberMe: {
         description: 'Whether to extend the lifetime of the user\'s session.',
@@ -49,7 +54,7 @@ module.exports = {
       }
     },
   
-    fn: async function ({email, password, rememberMe}) {
+    fn: async function ({email, password, rememberMe, is_via_google}) {
   
       // Look up by the email address.
       // (note that we lowercase it to ensure the lookup is always case-insensitive,
@@ -65,10 +70,16 @@ module.exports = {
         // return this.res.status(401).send('User is not exist / not active anymore');
       }
   
-      // If the password doesn't match, then also exit thru "badCombo".
-      await sails.helpers.passwords
-        .checkPassword(password, userRecord.password)
-        .intercept('incorrect', 'badCombo');
+      // if login via google, no need to check password
+      if (!is_via_google) {
+        // If the password doesn't match, then also exit thru "badCombo".
+        if (!password) {
+          return sails.helpers.convertResult(0, 'Password cannot be empty', null, null);
+        }
+        await sails.helpers.passwords
+          .checkPassword(password, userRecord.password)
+          .intercept('incorrect', 'badCombo');
+      }
   
       // If "Remember Me" was enabled, then keep the session alive for
       // a longer amount of time.  (This causes an updated "Set Cookie"
