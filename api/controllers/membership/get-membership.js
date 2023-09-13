@@ -36,6 +36,14 @@ module.exports = {
         result = currentMembership.rows[0];
       }
 
+      // get total active tier count
+      let tiers = await sails.sendNativeQuery(`
+        SELECT id 
+        FROM membership_tiers 
+        WHERE status = $1
+      `, [1]);
+      result.total_tiers = tiers.rows.length;
+
       return sails.helpers.convertResult(1, '', result, this.res);
     }
   };
