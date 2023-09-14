@@ -39,7 +39,8 @@ module.exports = {
             SELECT cm.id,
                 c.name,
                 $3 || c.image as image,
-                to_char(c.validity_date, 'DD Mon YYYY') as validity_date
+                to_char(c.start_date, 'DD Mon YYYY') as start_date,
+                to_char(c.validity_date, 'DD Mon YYYY') as end_date
             FROM coupons c
             JOIN coupon_members cm ON c.id = cm.coupon_id
             WHERE c.status = $1 AND 

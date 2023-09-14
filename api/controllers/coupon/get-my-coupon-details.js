@@ -12,7 +12,8 @@ module.exports = {
                 c.description,
                 c.name,
                 $1 || c.image as image,
-                to_char(c.validity_date, 'DD Mon YYYY') as validity_date, 
+                to_char(c.start_date, 'DD Mon YYYY') as start_date, 
+                to_char(c.validity_date, 'DD Mon YYYY') as end_date, 
                 c.value,
                 cm.code
             FROM coupons c
