@@ -12,18 +12,23 @@ module.exports = {
       var result;
       if (currentMembership.rows.length <= 0) {
         // default tier
-        let basicMembership = await sails.sendNativeQuery(`
+        let startMembership = await sails.sendNativeQuery(`
           SELECT mt.name, mt.total_spent_max
           FROM membership_tiers mt
-          WHERE lower(mt.name) = $1 AND mt.status = $2
-        `, ['basic', 1]);
+          WHERE mt.total_spent_min = $1 AND mt.status = $2
+        `, [0, 1]);
+
+        let nextTier = await sails.sendNativeQuery(`
+          SELECT mt.name
+          FROM membership_tiers mt
+          WHERE mt.status = $1 AND (mt.total_spent_min - $2) = 1;
+        `, [1, startMembership.rows[0].total_spent_max]);
 
         result = {
           points: 0,
           total_spent: 0,
-          name: basicMembership.rows[0].name,
-          total_spent_max: basicMembership.rows[0].total_spent_max,
-          diff_next_tier: 'Rp. ' + await sails.helpers.numberFormat(basicMembership.rows[0].total_spent_max) + ' left to reach VIP'
+          name: startMembership.rows[0].name,
+          diff_next_tier: 'Rp. ' + await sails.helpers.numberFormat(startMembership.rows[0].total_spent_max) + ' left to reach ' + nextTier.rows[0].name
         };
       } else {
         let nextTier = await sails.sendNativeQuery(`
@@ -38,11 +43,13 @@ module.exports = {
 
       // get total active tier count
       let tiers = await sails.sendNativeQuery(`
-        SELECT id 
+        SELECT id, total_spent_max
         FROM membership_tiers 
         WHERE status = $1
+        ORDER BY total_spent_max DESC
       `, [1]);
       result.total_tiers = tiers.rows.length;
+      result.total_spent_max = tiers.rows[0].total_spent_max;
 
       return sails.helpers.convertResult(1, '', result, this.res);
     }
