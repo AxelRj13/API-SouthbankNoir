@@ -24,9 +24,10 @@ module.exports = {
             // promo code validation
             let promoValue = 0;
             let promoType;
+            let minSpend = 0;
 
             let promos = await sails.sendNativeQuery(`
-                SELECT p.id, p.value, p.type, p.max_use_per_member
+                SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                 FROM promos p
                 JOIN promo_stores ps ON ps.promo_id = p.id
                 WHERE p.code = $1 AND
@@ -48,6 +49,12 @@ module.exports = {
 
                 promoValue = promos.rows[0].value;
                 promoType = promos.rows[0].type;
+
+                // check minimum spend
+                if (booking.rows[0].subtotal < promos.rows[0].minimum_spend) {
+                    let diff = promos.rows[0].minimum_spend - booking.rows[0].subtotal;
+                    return sails.helpers.convertResult(0, 'You need to spend Rp. ' + await sails.helpers.numberFormat(parseInt(diff)) + ' more to apply this promo.', null, this.res);
+                }
             } else {
                 let coupons = await sails.sendNativeQuery(`
                     SELECT c.value, c.type
@@ -68,10 +75,12 @@ module.exports = {
                 }
             }
 
+            // convert if type is percentage
             let discount = promoValue;
             if (promoType == 'percentage') {
                 discount = (promoValue/100) * booking.rows[0].subtotal;
             }
+
 
             if (discount > 0) {
                 await sails.sendNativeQuery(`
@@ -92,7 +101,7 @@ module.exports = {
 
             return sails.helpers.convertResult(1, 'Promo/Coupon Applied', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Order not found', null, this.res);
+            return sails.helpers.convertResult(0, 'Booking not found', null, this.res);
         }
     }
   };
