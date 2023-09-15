@@ -19,7 +19,8 @@ module.exports = {
                 contact_person_phone,
                 notes,
                 discount,
-                subtotal
+                subtotal,
+                promo_code_applied
             FROM bookings b
             JOIN stores s ON b.store_id = s.id
             LEFT JOIN events e ON 
@@ -40,6 +41,7 @@ module.exports = {
                 contact_person_phone: bookings.rows[0].contact_person_phone,
                 notes: bookings.rows[0].notes,
                 qty: '',
+                promo_code: bookings.rows[0].promo_code_applied,
                 total_discount: bookings.rows[0].discount ? 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].discount)) : '-',
                 total_payment: 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].subtotal)),
                 details: []

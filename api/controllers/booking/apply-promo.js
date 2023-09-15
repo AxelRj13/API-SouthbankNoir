@@ -43,18 +43,19 @@ module.exports = {
                     WHERE promo_id = $1 AND member_id = $2
                 `, [promos.rows[0].id, memberId]);
 
+                // check maximum usage
                 if (promos.rows[0].max_use_per_member <= promoUsage.rows.length) {
                     return sails.helpers.convertResult(0, 'Promo code has reached maximum usage.', null, this.res);
                 }
-
-                promoValue = promos.rows[0].value;
-                promoType = promos.rows[0].type;
 
                 // check minimum spend
                 if (booking.rows[0].subtotal < promos.rows[0].minimum_spend) {
                     let diff = promos.rows[0].minimum_spend - booking.rows[0].subtotal;
                     return sails.helpers.convertResult(0, 'You need to spend Rp. ' + await sails.helpers.numberFormat(parseInt(diff)) + ' more to apply this promo.', null, this.res);
                 }
+
+                promoValue = promos.rows[0].value;
+                promoType = promos.rows[0].type;
             } else {
                 let coupons = await sails.sendNativeQuery(`
                     SELECT c.value, c.type
