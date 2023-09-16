@@ -39,29 +39,27 @@ module.exports = {
             // status id for success booking
             for (const layoutData of layouts.rows) {
                 let tables = await sails.sendNativeQuery(`
-                    SELECT DISTINCT
-                        t.id, 
-                        t.name, 
-                        'Table ' || t.table_no as "table_no", 
-                        t.capacity || ' people' as "capacity", 
+                    SELECT t.id,
+                        t.name,
+                        t.table_no,
+                        'Table ' || t.table_no as "table_no",
+                        t.capacity || ' people' as "capacity",
                         t.down_payment,
                         t.minimum_spend,
-                        t.table_no,
                         (
-                            CASE WHEN b.reservation_date IS NOT NULL
-                            THEN
-                                CASE WHEN b.reservation_date = $3 AND b.status_order IN (SELECT id FROM status_orders WHERE lower(name) IN ('success', 'pending payment'))
-                                THEN 0
-                                ELSE 1
-                                END
+                            CASE WHEN (
+                                SELECT b.id
+                                FROM bookings b
+                                JOIN booking_details bd ON b.id = bd.booking_id AND t.id = bd.table_id
+                                WHERE b.status_order IN (SELECT so.id FROM status_orders so WHERE lower(so.name) IN ('pending payment', 'success')) AND b.reservation_date = $3
+                            ) IS NOT NULL
+                            THEN 0
                             ELSE 1
                             END
                         ) as "is_available"
                     FROM tables t
-                    LEFT JOIN booking_details bd ON t.id = bd.table_id
-                    LEFT JOIN bookings b ON bd.booking_id = b.id
                     WHERE t.table_blueprint_id = $1 AND t.status = $2
-                    ORDER BY t.table_no ASC
+                    ORDER BY t.table_no ASC;
                 `, [layoutData.id, 1, date]);
 
                 if (tables.rows.length > 0) {

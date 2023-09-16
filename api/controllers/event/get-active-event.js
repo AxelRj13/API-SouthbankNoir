@@ -7,9 +7,6 @@ module.exports = {
         }
     },
     fn: async function ({keyword}) {
-        // status id for success booking
-        let sucessBookingStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['success']);
-
         var query = `
             SELECT e.id, 
                 e.name, 
@@ -27,16 +24,16 @@ module.exports = {
                 ) as reservation_date,
                 (
                     CASE WHEN (
-                            SELECT count(DISTINCT t1.id) 
-                            FROM tables t1 
-                            JOIN table_blueprints tb ON t1.table_blueprint_id = tb.id
-                            WHERE tb.store_id = s.id AND t1.status = $1 AND tb.status = $1
-                        ) = (
-                            SELECT count(DISTINCT bd.table_id) 
-                            FROM bookings b 
-                            JOIN booking_details bd ON bd.booking_id = b.id
-                            WHERE b.reservation_date = reservation_date AND b.status_order = $4
-                        )
+                        SELECT count(DISTINCT t1.id) 
+                        FROM tables t1 
+                        JOIN table_blueprints tb ON t1.table_blueprint_id = tb.id
+                        WHERE tb.store_id = s.id AND t1.status = $1 AND tb.status = $1
+                    ) = (
+                        SELECT count(DISTINCT bd.table_id) 
+                        FROM bookings b 
+                        JOIN booking_details bd ON bd.booking_id = b.id
+                        WHERE b.reservation_date = reservation_date AND b.status_order IN (SELECT id FROM status_orders WHERE lower(name) IN ('success', 'pending payment'))
+                    )
                     THEN 1
                     ELSE 0
                     END
@@ -56,7 +53,7 @@ module.exports = {
             )`;
         }
 
-        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, new Date(), sucessBookingStatusId]);
+        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, new Date()]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);

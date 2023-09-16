@@ -1,9 +1,6 @@
 module.exports = {
     friendlyName: 'Get active today events',
     fn: async function () {
-        // status id for success booking
-        let sucessBookingStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['success']);
-        
         let result = await sails.sendNativeQuery(`
             SELECT e.id, 
                 e.name, 
@@ -29,7 +26,7 @@ module.exports = {
                             SELECT count(DISTINCT bd.table_id) 
                             FROM bookings b 
                             JOIN booking_details bd ON bd.booking_id = b.id
-                            WHERE b.reservation_date = reservation_date AND b.status_order = $4
+                            WHERE b.reservation_date = reservation_date AND b.status_order IN (SELECT id FROM status_orders WHERE lower(name) IN ('success', 'pending payment'))
                         )
                     THEN 1
                     ELSE 0
@@ -40,7 +37,7 @@ module.exports = {
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
                 date(e.start_date) = $3
-        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date()), sucessBookingStatusId]);
+        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date())]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);
