@@ -4,7 +4,7 @@ module.exports = {
         let result = await sails.sendNativeQuery(`
             SELECT a.id,
                 a.title,
-                trim(to_char(a.created_at, 'DD Month')) || to_char(a.created_at, ' YYYY') as created_at,
+                trim(to_char(a.created_at, 'DD Mon')) || to_char(a.created_at, ' YYYY') as created_at,
                 $2 || a.image as image
             FROM announcements a
             WHERE a.status = $1
