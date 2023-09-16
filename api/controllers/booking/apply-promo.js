@@ -24,8 +24,6 @@ module.exports = {
             // promo code validation
             let promoValue = 0;
             let promoType;
-            let minSpend = 0;
-
             let promos = await sails.sendNativeQuery(`
                 SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                 FROM promos p
@@ -64,6 +62,7 @@ module.exports = {
                     WHERE cm.member_id = $1 AND
                         cm.status = $2 AND
                         c.status = $2 AND
+                        c.start_date <= $3 AND
                         c.validity_date >= $3 AND
                         cm.code = $4
                 `, [memberId, 1, new Date(), code]);

@@ -7,6 +7,9 @@ module.exports = {
         }
     },
     fn: async function ({keyword}) {
+        // status id for success booking
+        let sucessBookingStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['success']);
+
         var query = `
             SELECT e.id, 
                 e.name, 
@@ -53,7 +56,7 @@ module.exports = {
             )`;
         }
 
-        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, new Date(), 2]);
+        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, new Date(), sucessBookingStatusId]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);

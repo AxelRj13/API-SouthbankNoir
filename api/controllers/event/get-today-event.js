@@ -1,6 +1,9 @@
 module.exports = {
     friendlyName: 'Get active today events',
     fn: async function () {
+        // status id for success booking
+        let sucessBookingStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['success']);
+        
         let result = await sails.sendNativeQuery(`
             SELECT e.id, 
                 e.name, 
@@ -37,7 +40,7 @@ module.exports = {
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
                 date(e.start_date) = $3
-        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date()), 2]);
+        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date()), sucessBookingStatusId]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);

@@ -32,26 +32,6 @@ module.exports = {
             orderNumber = 'TRN-SBN-' + currentDateFormatDMY.padStart(8, '0') + '-' + lastSeq.toString().padStart(3, '0');
         }
 
-        // check member info for contact person info
-        // var cpName = payload.contact_person_name;
-        // var cpPhone = payload.contact_person_phone;
-        // if (cpName == null || cpName == '') {
-        //     cpName = userLoginName;
-        // }
-        // if (cpPhone == null || cpPhone == '') {
-        //     let member = await sails.sendNativeQuery(`
-        //         SELECT phone
-        //         FROM members
-        //         WHERE id = $1 AND status = $2
-        //     `, [memberId, 1]);
-            
-        //     if (member.rows.length <= 0) {
-        //         return sails.helpers.convertResult(0, 'Member Not Found / Inactive');
-        //     }
-
-        //     cpPhone = member.rows[0].phone;
-        // }
-
         let member = await sails.sendNativeQuery(`SELECT phone FROM members WHERE id = $1 AND status = $2`, [memberId, 1]);
         if (member.rows.length <= 0) {
             return sails.helpers.convertResult(0, 'Member Not Found / Inactive', null, this.res);
@@ -63,7 +43,7 @@ module.exports = {
             reservationDate = currentDate;
         }
 
-        let statusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
+        let statusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['new']);
         let booking = await sails.sendNativeQuery(`
             INSERT INTO bookings (
                 store_id, member_id, status_order, order_no, reservation_date, 

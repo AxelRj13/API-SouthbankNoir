@@ -35,18 +35,22 @@ module.exports = {
                 date: date,
                 list: []
             };
+            
+            // status id for success booking
             for (const layoutData of layouts.rows) {
                 let tables = await sails.sendNativeQuery(`
-                    SELECT t.id, 
+                    SELECT DISTINCT
+                        t.id, 
                         t.name, 
                         'Table ' || t.table_no as "table_no", 
                         t.capacity || ' people' as "capacity", 
                         t.down_payment,
                         t.minimum_spend,
+                        t.table_no,
                         (
                             CASE WHEN b.reservation_date IS NOT NULL
                             THEN
-                                CASE WHEN b.reservation_date = $3 AND b.status_order = $4
+                                CASE WHEN b.reservation_date = $3 AND b.status_order IN (SELECT id FROM status_orders WHERE lower(name) IN ('success', 'pending payment'))
                                 THEN 0
                                 ELSE 1
                                 END
@@ -58,7 +62,7 @@ module.exports = {
                     LEFT JOIN bookings b ON bd.booking_id = b.id
                     WHERE t.table_blueprint_id = $1 AND t.status = $2
                     ORDER BY t.table_no ASC
-                `, [layoutData.id, 1, date, 2]);
+                `, [layoutData.id, 1, date]);
 
                 if (tables.rows.length > 0) {
                     for (const tableData of tables.rows) {
