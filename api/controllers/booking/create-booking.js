@@ -17,7 +17,7 @@ module.exports = {
         var currentDate = new Date();
         var month = currentDate.getMonth() + 1;
         var currentMonth = month < 10 ? '0'+month : month;
-        var currentDateFormatDMY = currentDate.getDate() + currentMonth + currentDate.getFullYear();
+        var currentDateFormatDMY = currentDate.getDate().toString() + currentMonth.toString() + currentDate.getFullYear().toString();
         var lastOrderNumber = await sails.sendNativeQuery(`
             SELECT order_no
             FROM bookings
