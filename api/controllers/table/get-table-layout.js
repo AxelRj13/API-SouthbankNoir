@@ -36,7 +36,6 @@ module.exports = {
                 list: []
             };
             
-            // status id for success booking
             for (const layoutData of layouts.rows) {
                 let tables = await sails.sendNativeQuery(`
                     SELECT t.id,
@@ -59,20 +58,42 @@ module.exports = {
                         ) as "is_available"
                     FROM tables t
                     WHERE t.table_blueprint_id = $1 AND t.status = $2
-                    ORDER BY t.table_no ASC;
+                    ORDER BY t.name, t.table_no ASC;
                 `, [layoutData.id, 1, date]);
 
                 if (tables.rows.length > 0) {
+                    let tableGroup = [];
+                    var tableList = [];
+                    var tableNameTemp = null;
                     for (const tableData of tables.rows) {
+                        if (!tableNameTemp) {
+                            tableNameTemp = tableData.name;
+                        } else {
+                            if (tableNameTemp !== tableData.name) {
+                                tableGroup.push({
+                                    name: tableNameTemp,
+                                    tables: tableList
+                                });
+                                tableList = [];
+                                tableNameTemp = tableData.name;
+                            }
+                        }
                         tableData.minimum_spend = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.minimum_spend));
                         tableData.down_payment = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.down_payment));
+                        tableList.push({
+                            id: tableData.id,
+                            table_no: tableData.table_no,
+                            capacity: tableData.capacity,
+                            down_payment: tableData.down_payment,
+                            minimum_spend: tableData.minimum_spend,
+                            is_available: tableData.is_available
+                        });
                     }
 
                     let resultTemp = {
                         layout: layoutData.name,
                         level: layoutData.level,
-                        image: layoutData.image,
-                        tables: tables.rows
+                        tables: tableGroup
                     };
                     result.list.push(resultTemp);
                 }
