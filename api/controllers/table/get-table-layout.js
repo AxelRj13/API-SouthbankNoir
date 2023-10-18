@@ -90,12 +90,17 @@ module.exports = {
                         });
                     }
 
-                    let resultTemp = {
+                    // push to the table group for final index
+                    tableGroup.push({
+                        name: tableNameTemp,
+                        tables: tableList
+                    });
+
+                    result.list.push({
                         layout: layoutData.name,
                         level: layoutData.level,
-                        tables: tableGroup
-                    };
-                    result.list.push(resultTemp);
+                        table: tableGroup
+                    });
                 }
             }
 
