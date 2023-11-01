@@ -12,12 +12,34 @@ module.exports = {
         let memberId = this.req.headers['member-id'];
         let userLoginName = this.req.headers['user-login-name'];
         let storeId = payload.store_id;
+        let bookingDetails = payload.details;
 
-        // generate no order
         var currentDate = new Date();
         var month = currentDate.getMonth() + 1;
         var currentMonth = month < 10 ? '0'+month : month;
         var currentDateFormatDMY = currentDate.getDate().toString() + currentMonth.toString() + currentDate.getFullYear().toString();
+        var reservationDate = payload.reservation_date;
+        if (!reservationDate) {
+            reservationDate = currentDate;
+        }
+
+        // booking table validation
+        for (const data of bookingDetails) {
+            var existingBookings = await sails.sendNativeQuery(`
+                SELECT b.id
+                FROM bookings b
+                JOIN booking_details bd ON bd.booking_id = b.id
+                WHERE b.reservation_date = $1 AND
+                    bd.table_id = $2 AND 
+                    b.status_order <> $3
+            `, [reservationDate, data.table_id, 4]);
+
+            if (existingBookings.rows.length > 0) {
+                return sails.helpers.convertResult(0, 'Table already booked, please try another table or change the date.', null, this.res);
+            }
+        }
+
+        // generate no order
         var lastOrderNumber = await sails.sendNativeQuery(`
             SELECT order_no
             FROM bookings
@@ -38,11 +60,6 @@ module.exports = {
         }
         var cpPhone = member.rows[0].phone;
 
-        var reservationDate = payload.reservation_date;
-        if (!reservationDate) {
-            reservationDate = currentDate;
-        }
-
         let statusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['new']);
         let booking = await sails.sendNativeQuery(`
             INSERT INTO bookings (
@@ -55,7 +72,6 @@ module.exports = {
             userLoginName, cpPhone, memberId, new Date()
         ]);
 
-        let bookingDetails = payload.details;
         var subtotal = 0;
         for (var i = 0; i < bookingDetails.length; i++) {
             await sails.sendNativeQuery(`
