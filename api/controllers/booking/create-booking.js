@@ -21,6 +21,12 @@ module.exports = {
         var reservationDate = payload.reservation_date;
         if (!reservationDate) {
             reservationDate = currentDate;
+        } else {
+            let reservationDateFormatted = await sails.helpers.convertDate(new Date(reservationDate));
+            let currentDateFormatted = await sails.helpers.convertDate(currentDate);
+            if (reservationDateFormatted < currentDateFormatted) {
+                return sails.helpers.convertResult(0, 'Date is not valid, please choose another date.', null, this.res);
+            }
         }
 
         // booking table validation

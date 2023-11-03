@@ -14,7 +14,7 @@ module.exports = {
   
     fn: async function ({ date }) {
         let formattedDate = new Date(date);
-        formattedDate.setTime(formattedDate.getTime() + 8 * 60 * 60 * 1000);
+        formattedDate.setTime(formattedDate.getTime() + 7 * 60 * 60 * 1000);
         return formattedDate.toJSON().slice(0, 10);
     }
   };
