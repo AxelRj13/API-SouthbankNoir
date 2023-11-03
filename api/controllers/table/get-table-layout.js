@@ -78,13 +78,15 @@ module.exports = {
                                 tableNameTemp = tableData.name;
                             }
                         }
-                        tableData.minimum_spend = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.minimum_spend));
+                        tableData.down_payment_number = tableData.down_payment;
                         tableData.down_payment = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.down_payment));
+                        tableData.minimum_spend = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.minimum_spend));
                         tableList.push({
                             id: tableData.id,
                             table_no: tableData.table_no,
                             capacity: tableData.capacity,
                             down_payment: tableData.down_payment,
+                            down_payment_number: tableData.down_payment_number,
                             minimum_spend: tableData.minimum_spend,
                             is_available: tableData.is_available
                         });
