@@ -35,6 +35,7 @@ module.exports = {
             result = {
                 booking_id: bookings.rows[0].id,
                 store_name: bookings.rows[0].store_name,
+                store_image: bookings.rows[0].store_image,
                 events: bookings.rows[0].events,
                 reservation_date: bookings.rows[0].reservation_date,
                 contact_person_name: bookings.rows[0].contact_person_name,

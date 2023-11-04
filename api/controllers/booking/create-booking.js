@@ -114,6 +114,6 @@ module.exports = {
         //     `, [calcPoint, new Date(), payload.customer_id]);
         // }
 
-        return sails.helpers.convertResult(1, 'Booking Successfully Created', null, this.res);
+        return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: booking.rows[0].id}, this.res);
     }
   };
