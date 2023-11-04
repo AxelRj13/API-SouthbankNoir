@@ -32,6 +32,7 @@ module.exports = {
         `, [booking_id, memberId, sails.config.imagePath, 1, new Date()]);
 
         if (bookings.rows.length > 0) {
+            let subtotal = bookings.rows[0].discount ? parseInt(bookings.rows[0].subtotal) - parseInt(bookings.rows[0].discount) : parseInt(bookings.rows[0].subtotal);
             result = {
                 booking_id: bookings.rows[0].id,
                 store_name: bookings.rows[0].store_name,
@@ -44,7 +45,7 @@ module.exports = {
                 qty: '',
                 promo_code: bookings.rows[0].promo_code_applied,
                 total_discount: bookings.rows[0].discount ? 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].discount)) : '-',
-                total_payment: 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].subtotal)),
+                total_payment: 'Rp. ' + await sails.helpers.numberFormat(subtotal),
                 details: []
             };
 
