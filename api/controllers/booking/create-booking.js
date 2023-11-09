@@ -35,10 +35,10 @@ module.exports = {
                 SELECT b.id
                 FROM bookings b
                 JOIN booking_details bd ON bd.booking_id = b.id
-                WHERE b.reservation_date = $1 AND
+                WHERE b.reservation_date = $1 AND 
                     bd.table_id = $2 AND 
-                    b.status_order <> $3
-            `, [reservationDate, data.table_id, 4]);
+                    b.status_order NOT IN ($3, $4)
+            `, [reservationDate, data.table_id, 1, 4]);
 
             if (existingBookings.rows.length > 0) {
                 return sails.helpers.convertResult(0, 'Table already booked, please try another table or change the date.', null, this.res);
