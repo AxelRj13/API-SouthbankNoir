@@ -76,4 +76,5 @@ module.exports.routes = {
   'POST /api/v1/booking/apply-promo': { action: 'booking/apply-promo' },
   'POST /api/v1/booking/confirm': { action: 'booking/confirm-booking' },
   'POST /api/v1/booking/payment': { action: 'booking/payment' },
+  'POST /api/v1/booking/confirm/payment': { action: 'booking/confirm-payment' }
 };
