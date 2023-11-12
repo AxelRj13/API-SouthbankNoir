@@ -66,17 +66,16 @@ module.exports = {
                     var tableList = [];
                     var tableNameTemp = null;
                     for (const tableData of tables.rows) {
-                        if (!tableNameTemp) {
-                            tableNameTemp = tableData.name;
-                        } else {
-                            if (tableNameTemp !== tableData.name) {
+                        sails.log(tableData.name);
+                        if (tableNameTemp !== tableData.name) {
+                            if (tableNameTemp) {
                                 tableGroup.push({
                                     name: tableNameTemp,
                                     tables: tableList
                                 });
                                 tableList = [];
-                                tableNameTemp = tableData.name;
                             }
+                            tableNameTemp = tableData.name;
                         }
                         tableData.down_payment_number = tableData.down_payment;
                         tableData.down_payment = 'Rp. ' + await sails.helpers.numberFormat(parseInt(tableData.down_payment));

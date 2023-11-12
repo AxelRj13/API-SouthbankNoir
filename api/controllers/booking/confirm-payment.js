@@ -19,8 +19,9 @@ module.exports = {
             FROM bookings b
             JOIN status_orders so ON b.status_order = so.id
             WHERE b.id = $1 AND 
-                lower(so.name) = $2
-        `, [booking_id, 'pending payment']);
+                lower(so.name) = $2 AND 
+                b.member_id = $3
+        `, [booking_id, 'pending payment', memberId]);
 
         if (existingBookings.rows.length <= 0) {
             return sails.helpers.convertResult(0, 'Order not valid or already paid.', null, this.res);

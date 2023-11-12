@@ -8,11 +8,12 @@ module.exports = {
     },
     fn: async function ({booking_id}) {
         var result = [];
+        let memberId = this.req.headers['member-id'];
         let bookings = await sails.sendNativeQuery(`
             SELECT b.order_no, b.subtotal, b.discount
             FROM bookings b
-            WHERE b.id = $1 AND b.status_order = $2
-        `, [booking_id, 2]);
+            WHERE b.id = $1 AND b.status_order = $2 AND b.member_id = $3
+        `, [booking_id, 2, memberId]);
 
         if (bookings.rows.length > 0) {
             result = {

@@ -74,7 +74,7 @@ module.exports = {
             result.qty = tableQty + ' Table(s)';
             return sails.helpers.convertResult(1, '', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Not Found', null, this.res);
+            return sails.helpers.convertResult(0, 'Booking not Found', null, this.res);
         }
     }
   };
