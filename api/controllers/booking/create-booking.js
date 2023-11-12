@@ -37,8 +37,11 @@ module.exports = {
                 JOIN booking_details bd ON bd.booking_id = b.id
                 WHERE b.reservation_date = $1 AND 
                     bd.table_id = $2 AND 
-                    b.status_order NOT IN ($3, $4)
-            `, [reservationDate, data.table_id, 1, 4]);
+                    (
+                        b.status_order NOT IN ($3, $4) OR
+                        b.member_id = $5
+                    )
+            `, [reservationDate, data.table_id, 1, 4, memberId]);
 
             if (existingBookings.rows.length > 0) {
                 return sails.helpers.convertResult(0, 'Table already booked, please try another table or change the date.', null, this.res);
@@ -95,24 +98,6 @@ module.exports = {
                 updated_at = $2
             WHERE id = $3
         `, [subtotal, new Date(), booking.rows[0].id]);
-
-        // point setting
-        // var salesConfigPoint = await sails.sendNativeQuery(`
-        //     SELECT point, point_value
-        //     FROM sales_config_points
-        //     WHERE lower(status) = $1 AND 
-        //         cast(customer_group as VARCHAR) like (SELECT '%'||customers.group_id||'%' FROM customers WHERE customers.id = $2);
-        // `, ['active', payload.customer_id]);
-
-        // if (salesConfigPoint.rows.length > 0) {
-        //     var calcPoint = Math.floor(payload.grandTotal / salesConfigPoint.rows[0].point_value) * salesConfigPoint.rows[0].point;
-        //     await sails.sendNativeQuery(`
-        //         UPDATE customers 
-        //         SET point = point + $1,
-        //             updated_at = $2
-        //         WHERE id = $3
-        //     `, [calcPoint, new Date(), payload.customer_id]);
-        // }
 
         return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: booking.rows[0].id}, this.res);
     }
