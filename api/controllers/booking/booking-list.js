@@ -61,11 +61,7 @@ module.exports = {
                 bookings: list
             });
 
-            result = {
-                list: dateGroup
-            };
-
-            return sails.helpers.convertResult(1, '', result, this.res);
+            return sails.helpers.convertResult(1, '', dateGroup, this.res);
         } else {
             return sails.helpers.convertResult(0, 'Bookings not Found', null, this.res);
         }
