@@ -86,7 +86,8 @@ module.exports = {
 
             var orderNumber = 'TRN-SBN-'+currentDateFormatDMY.padStart(8, '0')+'-001';
             if (lastOrderNumber.rows.length > 0) {
-                var lastSeq = parseInt(lastOrderNumber.rows[0].order_no.substring(19)) + 1;
+                var lastSeq = parseInt(lastOrderNumber.rows[0].order_no.substring(17)) + 1;
+                sails.log(lastSeq);
                 orderNumber = 'TRN-SBN-' + currentDateFormatDMY.padStart(8, '0') + '-' + lastSeq.toString().padStart(3, '0');
             }
 
