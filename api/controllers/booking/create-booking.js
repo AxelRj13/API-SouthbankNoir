@@ -159,8 +159,9 @@ module.exports = {
                             c.status = $2 AND
                             c.start_date <= $3 AND
                             c.validity_date >= $3 AND
-                            cm.code = $4
-                    `, [memberId, 1, currentDate, promoCode]).usingConnection(db);
+                            cm.code = $4 AND
+                            cm.usage = $5
+                    `, [memberId, 1, currentDate, promoCode, 0]).usingConnection(db);
 
                     if (coupons.rows.length <= 0) {
                         return sails.helpers.convertResult(0, 'Promo / Coupon code not valid or has reached maximum usage.', null, this.res);

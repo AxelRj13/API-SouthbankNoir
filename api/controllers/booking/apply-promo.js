@@ -63,8 +63,9 @@ module.exports = {
                         c.status = $2 AND
                         c.start_date <= $3 AND
                         c.validity_date >= $3 AND
-                        cm.code = $4
-                `, [memberId, 1, new Date(), code]);
+                        cm.code = $4 AND 
+                        cm.usage = $5
+                `, [memberId, 1, new Date(), code, 0]);
 
                 if (coupons.rows.length > 0) {
                     promoValue = coupons.rows[0].value;
