@@ -75,7 +75,6 @@ module.exports.routes = {
   'POST /api/v1/booking/list': { action: 'booking/booking-list' },
   'POST /api/v1/booking/details': { action: 'booking/booking-details' },
   'POST /api/v1/booking/apply-promo': { action: 'booking/apply-promo' },
-  'POST /api/v1/booking/confirm': { action: 'booking/confirm-booking' },
   'POST /api/v1/booking/payment': { action: 'booking/payment' },
   'POST /api/v1/booking/confirm/payment': { action: 'booking/confirm-payment' }
 };
