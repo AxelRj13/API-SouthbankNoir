@@ -1,8 +1,12 @@
 module.exports = {
 
-    friendlyName: 'Apply promo to booking',
+    friendlyName: 'Apply promo',
     inputs: {
-        booking_id: {
+        subtotal: {
+          type: 'number',
+          required: true
+        },
+        store_id: {
           type: 'number',
           required: true
         },
@@ -12,15 +16,10 @@ module.exports = {
         }
     },
   
-    fn: async function ({booking_id, code}) {
+    fn: async function ({subtotal, store_id, code}) {
         let memberId = this.req.headers['member-id'];
-        let booking = await sails.sendNativeQuery(`
-            SELECT store_id, discount, subtotal
-            FROM bookings
-            WHERE id = $1
-        `, [booking_id]);
 
-        if (booking.rows.length > 0) {
+        if (subtotal > 0) {
             // promo code validation
             let promoValue = 0;
             let promoType;
@@ -32,7 +31,7 @@ module.exports = {
                     p.status = $2 AND
                     ps.store_id = $3 AND
                     $4 BETWEEN p.start_date AND p.end_date
-            `, [code, 1, booking.rows[0].store_id, new Date()]);
+            `, [code, 1, store_id, new Date()]);
 
             if (promos.rows.length > 0) {
                 let promoUsage = await sails.sendNativeQuery(`
@@ -47,8 +46,8 @@ module.exports = {
                 }
 
                 // check minimum spend
-                if (booking.rows[0].subtotal < promos.rows[0].minimum_spend) {
-                    let diff = promos.rows[0].minimum_spend - booking.rows[0].subtotal;
+                if (subtotal < promos.rows[0].minimum_spend) {
+                    let diff = promos.rows[0].minimum_spend - subtotal;
                     return sails.helpers.convertResult(0, 'You need to spend Rp. ' + await sails.helpers.numberFormat(parseInt(diff)) + ' more to apply this promo.', null, this.res);
                 }
 
@@ -78,22 +77,10 @@ module.exports = {
             // convert if type is percentage
             let discount = promoValue;
             if (promoType == 'percentage') {
-                discount = (promoValue/100) * booking.rows[0].subtotal;
+                discount = (promoValue/100) * subtotal;
             }
 
-
-            if (discount > 0) {
-                await sails.sendNativeQuery(`
-                    UPDATE bookings
-                    SET discount = $1,
-                        promo_code_applied = $2,
-                        updated_by = $4,
-                        updated_at = $5
-                    WHERE id = $3
-                `, [discount, code, booking_id, memberId, new Date()]);
-            }
-
-            let totalPayment = parseInt(booking.rows[0].subtotal) - parseInt(discount);
+            let totalPayment = parseInt(subtotal) - parseInt(discount);
             let result = {
                 discount: 'Rp. ' + await sails.helpers.numberFormat(parseInt(discount)),
                 payment: 'Rp. ' + await sails.helpers.numberFormat(parseInt(totalPayment)),
@@ -101,7 +88,7 @@ module.exports = {
 
             return sails.helpers.convertResult(1, 'Promo/Coupon Applied', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Booking not found', null, this.res);
+            return sails.helpers.convertResult(0, 'Amount not valid', null, this.res);
         }
     }
   };
