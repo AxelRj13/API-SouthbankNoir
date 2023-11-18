@@ -66,7 +66,6 @@ module.exports = {
                     var tableList = [];
                     var tableNameTemp = null;
                     for (const tableData of tables.rows) {
-                        sails.log(tableData.name);
                         if (tableNameTemp !== tableData.name) {
                             if (tableNameTemp) {
                                 tableGroup.push({
