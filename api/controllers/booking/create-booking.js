@@ -96,32 +96,19 @@ module.exports = {
             }
             var cpPhone = member.rows[0].phone;
 
-            let booking = await sails.sendNativeQuery(`
-                INSERT INTO bookings (
-                    store_id, member_id, status_order, order_no, reservation_date, 
-                    contact_person_name, contact_person_phone, notes, discount,
-                    created_by, updated_by, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
-                RETURNING id
-            `, [
-                storeId, memberId, pendingPaymentStatusId.rows[0].id, orderNumber, reservationDate,
-                cpName, cpPhone, (notes ? notes : null), (discount ? discount : null),
-                memberId, currentDate
-            ]).usingConnection(db);
-
-            let newBookingId = booking.rows[0].id;
-
+            // calculate subtotal
             var subtotal = 0;
             for (var i = 0; i < bookingDetails.length; i++) {
-                await sails.sendNativeQuery(`
-                    INSERT INTO booking_details (booking_id, table_id, total, created_by, updated_by, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $4, $5, $5)
-                `, [newBookingId, bookingDetails[i].table_id, bookingDetails[i].total, memberId, currentDate]).usingConnection(db);
                 subtotal += bookingDetails[i].total;
             }
 
-            // re-validate promo/voucher in case it has been used on another bookings
+            // re-validate promo/voucher in case it has been used on another bookings (prevent racing condition)
+            var discount = 0;
+            let appliedPromoId;
+            let appliedCouponId;
             if (promoCode) {
+                let promoValue = 0;
+                let promoType;
                 let promos = await sails.sendNativeQuery(`
                     SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                     FROM promos p
@@ -149,9 +136,13 @@ module.exports = {
                         let diff = promos.rows[0].minimum_spend - subtotal;
                         return sails.helpers.convertResult(0, 'You need to spend Rp. ' + await sails.helpers.numberFormat(parseInt(diff)) + ' more to apply this promo.', null, this.res);
                     }
+
+                    promoValue = promos.rows[0].value;
+                    promoType = promos.rows[0].type;
+                    appliedPromoId = promos.rows[0].id;
                 } else {
                     let coupons = await sails.sendNativeQuery(`
-                        SELECT c.value, c.type
+                        SELECT cm.id, c.value, c.type
                         FROM coupon_members cm
                         JOIN coupons c ON cm.coupon_id = c.id
                         WHERE cm.member_id = $1 AND
@@ -165,16 +156,66 @@ module.exports = {
 
                     if (coupons.rows.length <= 0) {
                         return sails.helpers.convertResult(0, 'Promo / Coupon code not valid or has reached maximum usage.', null, this.res);
+                    } else {
+                        promoValue = coupons.rows[0].value;
+                        promoType = coupons.rows[0].type;
+                        appliedCouponId = coupons.rows[0].id;
                     }
                 }
+
+                // convert if type is percentage
+                discount = promoValue;
+                if (promoType == 'percentage') {
+                    discount = parseInt((promoValue/100) * subtotal);
+                }
+            }
+
+            // create booking data
+            let booking = await sails.sendNativeQuery(`
+                INSERT INTO bookings (
+                    store_id, member_id, status_order, order_no, reservation_date, 
+                    contact_person_name, contact_person_phone, notes, discount, promo_code_applied,
+                    created_by, updated_by, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, $12)
+                RETURNING id
+            `, [
+                storeId, memberId, pendingPaymentStatusId.rows[0].id, orderNumber, reservationDate,
+                cpName, cpPhone, (notes ? notes : null), (discount > 0 ? discount : null), (promoCode && discount > 0 ? promoCode : null),
+                memberId, currentDate
+            ]).usingConnection(db);
+
+            let newBookingId = booking.rows[0].id;
+
+            for (var i = 0; i < bookingDetails.length; i++) {
+                await sails.sendNativeQuery(`
+                    INSERT INTO booking_details (booking_id, table_id, total, created_by, updated_by, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $4, $5, $5)
+                `, [newBookingId, bookingDetails[i].table_id, bookingDetails[i].total, memberId, currentDate]).usingConnection(db);
             }
 
             // update subtotal
             await sails.sendNativeQuery(`
                 UPDATE bookings
-                SET subtotal = $1, promo_code_applied = $2
-                WHERE id = $3
-            `, [subtotal, (promoCode ? promoCode : null), newBookingId]).usingConnection(db);
+                SET subtotal = $1
+                WHERE id = $2
+            `, [subtotal, newBookingId]).usingConnection(db);
+
+            if (appliedPromoId) {
+                // save promo usage
+                await sails.sendNativeQuery(`
+                    INSERT INTO promo_usage_members (promo_id, member_id, booking_id, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $4)
+                `, [appliedPromoId, memberId, newBookingId, currentDate]).usingConnection(db);
+            } else {
+                if (appliedCouponId) {
+                    // save coupon usage
+                    await sails.sendNativeQuery(`
+                        UPDATE coupon_members
+                        SET usage = usage + $1
+                        WHERE id = $2
+                    `, [1, appliedCouponId]).usingConnection(db);
+                }
+            }
 
             return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId}, this.res);
         })
