@@ -21,11 +21,11 @@ module.exports = {
             LEFT JOIN events e ON 
                 e.store_id = s.id AND
                 e.status = $3 AND
-                e.start_date <= $4 AND e.end_date >= $4
+                (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
             WHERE b.member_id = $1
             GROUP BY b.id, b.order_no, b.reservation_date, s.name, s.image, t.name, t.capacity, so.name
             ORDER BY b.reservation_date DESC, b.order_no DESC
-        `, [memberId, sails.config.imagePath, 1, new Date()]);
+        `, [memberId, sails.config.imagePath, 1]);
 
         if (bookings.rows.length > 0) {
             let dateGroup = [];
@@ -48,7 +48,7 @@ module.exports = {
                     status: bookingData.status,
                     store_name: bookingData.store_name,
                     store_image: bookingData.store_image,
-                    events: bookingData.events,
+                    events: bookingData.events ? bookingData.events : '-',
                     reservation_date: bookingData.reservation_date,
                     table_name: bookingData.table_name,
                     table_capacity: 'Max ' + bookingData.table_capacity + ' people'

@@ -26,10 +26,10 @@ module.exports = {
             LEFT JOIN events e ON 
                 e.store_id = s.id AND
                 e.status = $4 AND
-                e.start_date <= $5 AND e.end_date >= $5
+                (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
             WHERE b.id = $1 AND b.member_id = $2
             GROUP BY b.id, s.name, s.image, contact_person_name, contact_person_phone, notes, discount, subtotal
-        `, [booking_id, memberId, sails.config.imagePath, 1, new Date()]);
+        `, [booking_id, memberId, sails.config.imagePath, 1]);
 
         if (bookings.rows.length > 0) {
             let subtotal = bookings.rows[0].discount ? parseInt(bookings.rows[0].subtotal) - parseInt(bookings.rows[0].discount) : parseInt(bookings.rows[0].subtotal);
@@ -37,7 +37,7 @@ module.exports = {
                 booking_id: bookings.rows[0].id,
                 store_name: bookings.rows[0].store_name,
                 store_image: bookings.rows[0].store_image,
-                events: bookings.rows[0].events,
+                events: bookings.rows[0].events ? bookings.rows[0].events : '-',
                 reservation_date: bookings.rows[0].reservation_date,
                 contact_person_name: bookings.rows[0].contact_person_name,
                 contact_person_phone: bookings.rows[0].contact_person_phone,
