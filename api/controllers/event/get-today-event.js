@@ -8,7 +8,16 @@ module.exports = {
                 s.id as store_id,
                 s.name as store_name, 
                 $2 || e.image as image, 
-                to_char(e.start_date, 'Dy, DD Mon YYYY') as date_start, 
+                (
+                    CASE WHEN date(start_date) = date(end_date)
+                    THEN to_char(start_date, 'Dy, DD Mon YYYY')
+                    ELSE 
+                        CASE WHEN to_char(start_date, 'YYYY') = to_char(end_date, 'YYYY')
+                        THEN to_char(start_date, 'Dy, DD Mon') || ' - ' || to_char(end_date, 'Dy, DD Mon YYYY')
+                        ELSE to_char(start_date, 'Dy, DD Mon YYYY') || ' - ' || to_char(end_date, 'Dy, DD Mon YYYY')
+                        END
+                    END
+                ) as date_start,
                 to_char(e.start_date, 'HH24:MI') as time_start,
                 (
                     CASE WHEN e.start_date > $3
@@ -36,7 +45,7 @@ module.exports = {
             JOIN stores s ON e.store_id = s.id
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
-                date(e.start_date) = $3
+                $3 BETWEEN date(e.start_date) AND date(e.end_date)
         `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date())]);
 
         if (result.rows.length > 0) {
