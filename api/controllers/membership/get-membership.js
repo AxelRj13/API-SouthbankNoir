@@ -37,7 +37,11 @@ module.exports = {
           WHERE mt.status = $1 AND (mt.total_spent_min - $2) = 1;
         `, [1, currentMembership.rows[0].total_spent_max]);
 
-        currentMembership.rows[0].diff_next_tier = 'Rp. ' + await sails.helpers.numberFormat(currentMembership.rows[0].total_spent_max - currentMembership.rows[0].total_spent) + ' left to reach ' + nextTier.rows[0].name;
+        currentMembership.rows[0].diff_next_tier = 'You\'re already at max tier.';
+        if (nextTier.rows.length > 0) {
+          currentMembership.rows[0].diff_next_tier = 'Rp. ' + await sails.helpers.numberFormat(currentMembership.rows[0].total_spent_max - currentMembership.rows[0].total_spent) + ' left to reach ' + nextTier.rows[0].name;
+        }
+
         result = currentMembership.rows[0];
       }
 
