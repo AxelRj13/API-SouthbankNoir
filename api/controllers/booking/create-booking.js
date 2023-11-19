@@ -15,7 +15,6 @@ module.exports = {
         let bookingDetails = payload.details;
         let promoCode = payload.promo_code;
         let notes = payload.notes;
-        let discount = payload.discount;
 
         // validate reservation date
         var currentDate = new Date();
@@ -95,7 +94,6 @@ module.exports = {
             if (member.rows.length <= 0) {
                 return sails.helpers.convertResult(0, 'Member Not Found / Inactive', null, this.res);
             }
-            var cpPhone = member.rows[0].phone;
 
             // calculate subtotal
             var subtotal = 0;
