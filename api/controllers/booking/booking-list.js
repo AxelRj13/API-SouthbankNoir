@@ -1,7 +1,6 @@
 module.exports = {
     friendlyName: 'Get my booking list based on member id',
     fn: async function () {
-        var result = [];
         let memberId = this.req.headers['member-id'];
         let bookings = await sails.sendNativeQuery(`
             SELECT b.id, 
