@@ -23,18 +23,22 @@ module.exports = {
 
         if (layouts.rows.length > 0) {
             let storeAndDateInfo = await sails.sendNativeQuery(`
-                SELECT s.id, s.name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display, string_agg(e.name, ', ') as events
+                SELECT s.id, s.name, 
+                    to_char($2::date, 'Dy, DD Mon YYYY') as date_display, 
+                    string_agg(e.name, ', ') as events, 
+                    $4 || s.image as "store_image"
                 FROM stores s
                 LEFT JOIN events e ON s.id = e.store_id AND 
                     ($2 BETWEEN date(e.start_date) AND date(e.end_date)) AND 
                     e.status = $3
                 WHERE s.id = $1
                 GROUP BY s.id, s.name
-            `, [store_id, date, 1]);
+            `, [store_id, date, 1, sails.config.imagePath]);
 
             result = {
                 store_id: storeAndDateInfo.rows[0].id,
                 store_name: storeAndDateInfo.rows[0].name,
+                store_iamge: storeAndDateInfo.rows[0].store_image,
                 date_display: storeAndDateInfo.rows[0].date_display,
                 date: date,
                 events: storeAndDateInfo.rows[0].events ? storeAndDateInfo.rows[0].events : '-',
