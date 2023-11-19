@@ -13,7 +13,7 @@ module.exports = {
     fn: async function ({store_id, date}) {
         var result = [];
         if (!date) {
-            date = new Date();
+            date = await sails.helpers.convertDate(new Date());
         }
         let layouts = await sails.sendNativeQuery(`
             SELECT tb.id, tb.name, tb.level, $3 || tb.image as "image"
@@ -23,16 +23,21 @@ module.exports = {
 
         if (layouts.rows.length > 0) {
             let storeAndDateInfo = await sails.sendNativeQuery(`
-                SELECT id, name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display
-                FROM stores
-                WHERE id = $1
-            `, [store_id, date]);
+                SELECT s.id, s.name, to_char($2::date, 'Dy, DD Mon YYYY') as date_display, string_agg(e.name, ', ') as events
+                FROM stores s
+                LEFT JOIN events e ON s.id = e.store_id AND 
+                    ($2 BETWEEN date(e.start_date) AND date(e.end_date)) AND 
+                    e.status = $3
+                WHERE s.id = $1
+                GROUP BY s.id, s.name
+            `, [store_id, date, 1]);
 
             result = {
                 store_id: storeAndDateInfo.rows[0].id,
                 store_name: storeAndDateInfo.rows[0].name,
                 date_display: storeAndDateInfo.rows[0].date_display,
                 date: date,
+                events: storeAndDateInfo.rows[0].events ? storeAndDateInfo.rows[0].events : '-',
                 list: []
             };
             
