@@ -35,5 +35,9 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   },
   imagePath: 'http://southbank.dn7store.com/upload/img/',
   sailsImagePath: 'http://206.189.39.51/images/',
-  port: 8888
+  port: 8888,
+  paymentSnapURL: 'https://app.sandbox.midtrans.com/snap/v1/',
+  paymentAPIURL: 'https://api.sandbox.midtrans.com/v2/',
+  paymentRedirectURL: 'https://app.sandbox.midtrans.com/snap/v3/redirection/',
+  serverKeyBase64: 'U0ItTWlkLXNlcnZlci1CYVRRNnh4SEFIWlBPZTBMRjYtbXVrRWI6'
 });

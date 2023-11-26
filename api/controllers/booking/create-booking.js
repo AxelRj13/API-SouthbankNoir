@@ -86,19 +86,35 @@ module.exports = {
             var orderNumber = 'TRN-SBN-'+currentDateFormatDMY.padStart(8, '0')+'-001';
             if (lastOrderNumber.rows.length > 0) {
                 var lastSeq = parseInt(lastOrderNumber.rows[0].order_no.substring(17)) + 1;
-                sails.log(lastSeq);
                 orderNumber = 'TRN-SBN-' + currentDateFormatDMY.padStart(8, '0') + '-' + lastSeq.toString().padStart(3, '0');
             }
 
-            let member = await sails.sendNativeQuery(`SELECT phone FROM members WHERE id = $1 AND status = $2`, [memberId, 1]).usingConnection(db);
+            let member = await sails.sendNativeQuery(`SELECT first_name, last_name, phone, email FROM members WHERE id = $1 AND status = $2`, [memberId, 1]).usingConnection(db);
             if (member.rows.length <= 0) {
                 return sails.helpers.convertResult(0, 'Member Not Found / Inactive', null, this.res);
             }
 
             // calculate subtotal
             var subtotal = 0;
+            var paymentDetailsPayload = [];
             for (var i = 0; i < bookingDetails.length; i++) {
                 subtotal += bookingDetails[i].total;
+
+                let table = await sails.sendNativeQuery(`
+                    SELECT t.name, t.table_no
+                    FROM tables t
+                    WHERE t.id = $1
+                `, [bookingDetails[i].table_id]);
+
+                paymentDetailsPayload.push({
+                    id: bookingDetails[i].table_id,
+                    name: table.rows[0].name,
+                    price: bookingDetails[i].total,
+                    quantity: 1,
+                    brand: 'SouthbankNoir',
+                    category: 'Reservation',
+                    merchant_name: 'SouthbankNoir'
+                });
             }
 
             // re-validate promo/voucher in case it has been used on another bookings (prevent racing condition)
@@ -169,6 +185,59 @@ module.exports = {
                 }
             }
 
+            // connect to midtrans
+            const fetch = require('node-fetch');
+            const options = {
+                method: 'POST',
+                headers: {
+                    accept: 'application/json',
+                    'content-type': 'application/json',
+                    authorization: 'Basic ' + sails.config.serverKeyBase64
+                },
+                body: JSON.stringify({
+                    transaction_details: {
+                        order_id: orderNumber, 
+                        gross_amount: subtotal - discount
+                    },
+                    item_details: paymentDetailsPayload,
+                    customer_details: {
+                        first_name: member.rows[0].first_name,
+                        last_name: member.rows[0].last_name,
+                        email: member.rows[0].email,
+                        phone: member.rows[0].phone
+                    },
+                    enabled_payments: ["bca_klikbca","bca_va"],
+                    expiry: {
+                        "unit": "minutes",
+                        "duration": 60
+                    },
+                    custom_field1: "custom field 1 content"
+                })
+            };
+
+            let paymentResult;
+            var isError = false;
+            var errorMsg = "";
+            await fetch(sails.config.paymentSnapURL + 'transactions', options)
+                .then(res => res.json())
+                .then(json => {
+                    console.log(json);
+                    paymentResult = json;
+                    if (!paymentResult.token) {
+                        errorMsg = 'Payment Transaction Error. Please try again.';
+                        isError = true;
+                    }
+                })
+                .catch(err => {
+                    console.error('error:' + err);
+                    errorMsg = err;
+                    isError = true;
+                });
+            
+            if (isError) {
+                return sails.helpers.convertResult(0, errorMsg, null, this.res);
+            }
+
             // create booking data
             let booking = await sails.sendNativeQuery(`
                 INSERT INTO bookings (
@@ -184,7 +253,6 @@ module.exports = {
             ]).usingConnection(db);
 
             let newBookingId = booking.rows[0].id;
-
             for (var i = 0; i < bookingDetails.length; i++) {
                 await sails.sendNativeQuery(`
                     INSERT INTO booking_details (booking_id, table_id, total, created_by, updated_by, created_at, updated_at)
@@ -192,13 +260,15 @@ module.exports = {
                 `, [newBookingId, bookingDetails[i].table_id, bookingDetails[i].total, memberId, currentDate]).usingConnection(db);
             }
 
-            // update subtotal
+            // update subtotal and payment trx id
             await sails.sendNativeQuery(`
                 UPDATE bookings
-                SET subtotal = $1
-                WHERE id = $2
-            `, [subtotal, newBookingId]).usingConnection(db);
+                SET subtotal = $1,
+                    midtrans_trx_id = $2
+                WHERE id = $3
+            `, [subtotal, paymentResult.token, newBookingId]).usingConnection(db);
 
+            // save promo / coupon usage
             if (appliedPromoId) {
                 // save promo usage
                 await sails.sendNativeQuery(`
@@ -216,7 +286,7 @@ module.exports = {
                 }
             }
 
-            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId}, this.res);
+            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId, result: paymentResult}, this.res);
         })
     }
   };
