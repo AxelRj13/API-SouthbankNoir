@@ -30,13 +30,15 @@ module.exports = {
             };
             var isError = false;
             var isExpired = false;
+            var isPaid = false;
             var errorMsg;
             let vaNumber;
             await fetch(sails.config.paymentAPIURL + bookings.rows[0].order_no + '/status', options)
                 .then(res => res.json())
                 .then(json => {
-                    if (json.status_code == '201') {
+                    if (json.status_code == '201' || json.status_code == '200') {
                         vaNumber = json.va_numbers.filter((va) => va.bank == 'bca')[0].va_number;
+                        isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no;
                     } else if (json.status_code == '407' && json.transaction_status == 'expire') {
                         isExpired = true;
                         errorMsg = "Transaction already expired, please create another.";
@@ -66,7 +68,7 @@ module.exports = {
             }
 
             result = {
-                redirect_url: sails.config.paymentRedirectURL + bookings.rows[0].midtrans_trx_id,
+                redirect_url: (!isPaid) ? sails.config.paymentRedirectURL + bookings.rows[0].midtrans_trx_id : null,
                 order_id: bookings.rows[0].order_no,
                 subtotal: 'Rp. ' + await sails.helpers.numberFormat(bookings.rows[0].discount ? parseInt(bookings.rows[0].subtotal) - parseInt(bookings.rows[0].discount) : parseInt(bookings.rows[0].subtotal)),
                 virtualAccountNumber: vaNumber
