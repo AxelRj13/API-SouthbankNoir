@@ -108,7 +108,7 @@ module.exports = {
 
                 paymentDetailsPayload.push({
                     id: bookingDetails[i].table_id,
-                    name: table.rows[0].name,
+                    name: 'Table ' + table.rows[0].table_no + ' ' + table.rows[0].name,
                     price: bookingDetails[i].total,
                     quantity: 1,
                     brand: 'SouthbankNoir',
@@ -183,9 +183,18 @@ module.exports = {
                 if (promoType == 'percentage') {
                     discount = parseInt((promoValue/100) * subtotal);
                 }
+                // add discount item for payment payload
+                paymentDetailsPayload.push({
+                    name: 'discount',
+                    price: discount * -1,
+                    quantity: 1,
+                    brand: 'SouthbankNoir',
+                    category: 'Reservation',
+                    merchant_name: 'SouthbankNoir'
+                });
             }
 
-            // connect to midtrans
+            // connect to payment gateway
             const fetch = require('node-fetch');
             const options = {
                 method: 'POST',
@@ -196,7 +205,7 @@ module.exports = {
                 },
                 body: JSON.stringify({
                     transaction_details: {
-                        order_id: orderNumber, 
+                        order_id: orderNumber,
                         gross_amount: subtotal - discount
                     },
                     item_details: paymentDetailsPayload,
@@ -217,20 +226,20 @@ module.exports = {
 
             let paymentResult;
             var isError = false;
-            var errorMsg = "";
+            var errorMsg;
             await fetch(sails.config.paymentSnapURL + 'transactions', options)
                 .then(res => res.json())
                 .then(json => {
-                    console.log(json);
                     paymentResult = json;
                     if (!paymentResult.token) {
+                        console.log(json);
                         errorMsg = 'Payment Transaction Error. Please try again.';
                         isError = true;
                     }
                 })
                 .catch(err => {
-                    console.error('error:' + err);
-                    errorMsg = err;
+                    console.error('error: ' + err);
+                    errorMsg = err.toString();
                     isError = true;
                 });
             
@@ -286,7 +295,7 @@ module.exports = {
                 }
             }
 
-            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId, result: paymentResult}, this.res);
+            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId, payment_response: paymentResult}, this.res);
         })
     }
   };
