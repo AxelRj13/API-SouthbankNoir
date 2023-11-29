@@ -195,53 +195,53 @@ module.exports = {
             }
 
             // connect to payment gateway
-            const fetch = require('node-fetch');
-            const options = {
-                method: 'POST',
-                headers: {
-                    accept: 'application/json',
-                    'content-type': 'application/json',
-                    authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
+            const midtransClient = require('midtrans-client');
+            let core = new midtransClient.CoreApi({
+                isProduction : sails.config.isProd,
+                serverKey : sails.config.serverKey,
+                clientKey : sails.config.clientKey
+            });
+
+            let parameter = JSON.stringify({
+                payment_type: "bank_transfer",
+                transaction_details: {
+                    order_id: orderNumber,
+                    gross_amount: subtotal - discount
                 },
-                body: JSON.stringify({
-                    transaction_details: {
-                        order_id: orderNumber,
-                        gross_amount: subtotal - discount
-                    },
-                    item_details: paymentDetailsPayload,
-                    customer_details: {
-                        first_name: member.rows[0].first_name,
-                        last_name: member.rows[0].last_name,
-                        email: member.rows[0].email,
-                        phone: member.rows[0].phone
-                    },
-                    enabled_payments: ["bca_klikbca","bca_va"],
-                    expiry: {
-                        "unit": "minutes",
-                        "duration": 60
-                    },
-                    custom_field1: "custom field 1 content"
-                })
-            };
+                item_details: paymentDetailsPayload,
+                customer_details: {
+                    first_name: member.rows[0].first_name,
+                    last_name: member.rows[0].last_name,
+                    email: member.rows[0].email,
+                    phone: member.rows[0].phone
+                },
+                bank_transfer: {
+                    bank: "bca"
+                },
+                custom_expiry: {
+                    expiry_duration: 60,
+                    unit: "minute"
+                }
+            });
 
             let paymentResult;
             var isError = false;
             var errorMsg;
-            await fetch(sails.config.paymentSnapURL + 'transactions', options)
-                .then(res => res.json())
-                .then(json => {
-                    paymentResult = json;
-                    if (!paymentResult.token) {
-                        console.log(json);
-                        errorMsg = 'Payment Transaction Error. Please try again.';
+            await core.charge(parameter)
+                .then((chargeResponse) => {
+                    if (chargeResponse.status_code !== '201') {
+                        errorMsg = 'Payment Transaction Error due to: ' + chargeResponse.status_message;
                         isError = true;
+                    } else {
+                        paymentResult = chargeResponse;
                     }
                 })
-                .catch(err => {
-                    console.error('error: ' + err);
-                    errorMsg = err.toString();
+                .catch((err) => {
+                    errorMsg = err.message;
+                    console.error('Error: ' + errorMsg);
                     isError = true;
                 });
+            ;
             
             if (isError) {
                 return sails.helpers.convertResult(0, errorMsg, null, this.res);
@@ -275,7 +275,7 @@ module.exports = {
                 SET subtotal = $1,
                     midtrans_trx_id = $2
                 WHERE id = $3
-            `, [subtotal, paymentResult.token, newBookingId]).usingConnection(db);
+            `, [subtotal, paymentResult.transaction_id, newBookingId]).usingConnection(db);
 
             // save promo / coupon usage
             if (appliedPromoId) {
@@ -295,7 +295,7 @@ module.exports = {
                 }
             }
 
-            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId, payment_response: paymentResult}, this.res);
+            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId}, this.res);
         })
     }
   };
