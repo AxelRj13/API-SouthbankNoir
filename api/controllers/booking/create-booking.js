@@ -201,7 +201,7 @@ module.exports = {
                 headers: {
                     accept: 'application/json',
                     'content-type': 'application/json',
-                    authorization: 'Basic ' + sails.config.serverKeyBase64
+                    authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
                 },
                 body: JSON.stringify({
                     transaction_details: {

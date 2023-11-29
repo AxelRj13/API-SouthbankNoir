@@ -39,5 +39,5 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   paymentSnapURL: 'https://app.sandbox.midtrans.com/snap/v1/',
   paymentAPIURL: 'https://api.sandbox.midtrans.com/v2/',
   paymentRedirectURL: 'https://app.sandbox.midtrans.com/snap/v3/redirection/',
-  serverKeyBase64: 'U0ItTWlkLXNlcnZlci1CYVRRNnh4SEFIWlBPZTBMRjYtbXVrRWI6'
+  serverKey: 'SB-Mid-server-BaTQ6xxHAHZPOe0LF6-mukEb'
 });
