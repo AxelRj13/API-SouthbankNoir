@@ -205,7 +205,7 @@ module.exports = {
             let parameter = JSON.stringify({
                 payment_type: "bank_transfer",
                 transaction_details: {
-                    order_id: 'TRN-SBN-29112023-006',
+                    order_id: orderNumber,
                     gross_amount: subtotal - discount
                 },
                 item_details: paymentDetailsPayload,
