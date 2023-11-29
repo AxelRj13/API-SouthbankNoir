@@ -205,7 +205,7 @@ module.exports = {
             let parameter = JSON.stringify({
                 payment_type: "bank_transfer",
                 transaction_details: {
-                    order_id: orderNumber,
+                    order_id: 'TRN-SBN-29112023-006',
                     gross_amount: subtotal - discount
                 },
                 item_details: paymentDetailsPayload,
@@ -237,7 +237,7 @@ module.exports = {
                     }
                 })
                 .catch((err) => {
-                    errorMsg = err.message;
+                    errorMsg = err.ApiResponse.status_message;
                     console.error('Error: ' + errorMsg);
                     isError = true;
                 });
