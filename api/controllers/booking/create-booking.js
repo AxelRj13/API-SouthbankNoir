@@ -237,7 +237,10 @@ module.exports = {
                     }
                 })
                 .catch((err) => {
-                    errorMsg = err.ApiResponse.status_message;
+                    errorMsg = err.message;
+                    if (err.ApiResponse) {
+                        errorMsg = err.ApiResponse.status_message;
+                    }
                     console.error('Error: ' + errorMsg);
                     isError = true;
                 });
