@@ -33,7 +33,7 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
       url: 'postgresql://deniel:Nerrazurri7@206.189.39.51:5432/staging-southbanknoir'
     }
   },
-  imagePath: 'http://southbanknoir.com/upload/img/',
+  imagePath: 'http://be.southbanknoir.com/upload/img/',
   sailsImagePath: 'http://206.189.39.51/images/',
   port: 8888,
   paymentSnapURL: 'https://app.sandbox.midtrans.com/snap/v1/',
