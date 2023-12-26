@@ -30,7 +30,7 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   datastores: {
     default: {
       adapter: 'sails-postgresql',
-      url: 'postgresql://deniel:Nerrazurri7@206.189.39.51:5432/staging-southbanknoir'
+      url: 'postgresql://southbanknoir:s0uthbankNoir@128.199.155.9:5432/staging-southbanknoir'
     }
   },
   imagePath: 'http://be.southbanknoir.com/upload/img/',
