@@ -33,8 +33,8 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
       url: 'postgresql://southbanknoir:s0uthbankNoir@128.199.155.9:5432/staging-southbanknoir'
     }
   },
-  imagePath: 'http://be.southbanknoir.com/upload/img/',
-  sailsImagePath: 'http://206.189.39.51/images/',
+  imagePath: 'https://be.southbanknoir.com/upload/img/',
+  sailsImagePath: 'https://api.southbanknoir.com/images/',
   port: 8888,
   paymentSnapURL: 'https://app.sandbox.midtrans.com/snap/v1/',
   paymentAPIURL: 'https://api.sandbox.midtrans.com/v2/',
