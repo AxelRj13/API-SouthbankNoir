@@ -11,7 +11,7 @@ module.exports = {
                 SUM(t.capacity) as table_capacity,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 $2 || s.image as store_image,
-                string_agg(DISTINCT e.name, ', ') as event_name
+                string_agg(DISTINCT e.name, ', ') as events
             FROM bookings b
             JOIN booking_details bd ON b.id = bd.booking_id
             JOIN tables t ON bd.table_id = t.id
