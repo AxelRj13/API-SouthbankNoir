@@ -8,7 +8,7 @@ module.exports = {
                 s.name as store_name,
                 so.name as status,
                 string_agg(DISTINCT t.name || ' ' || t.table_no, ' | ') as table_name,
-                SUM(t.capacity) as table_capacity,
+                SUM(DISTINCT t.capacity) as table_capacity,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 $2 || s.image as store_image,
                 string_agg(DISTINCT e.name, ', ') as events
