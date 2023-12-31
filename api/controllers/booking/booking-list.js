@@ -3,16 +3,23 @@ module.exports = {
     fn: async function () {
         let memberId = this.req.headers['member-id'];
         let bookings = await sails.sendNativeQuery(`
+            WITH TableCapacityCTE AS (
+                SELECT bd.booking_id, SUM(t.capacity) as total_table_capacity
+                FROM booking_details bd
+                JOIN tables t ON bd.table_id = t.id
+                GROUP BY bd.booking_id
+            )
             SELECT b.id, 
                 b.order_no,
                 s.name as store_name,
                 so.name as status,
                 string_agg(DISTINCT t.name || ' ' || t.table_no, ' | ') as table_name,
-                SUM(DISTINCT t.capacity) as table_capacity,
+                tc.total_table_capacity as table_capacity,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 $2 || s.image as store_image,
                 string_agg(DISTINCT e.name, ', ') as events
             FROM bookings b
+            JOIN TableCapacityCTE tc ON b.id = tc.booking_id
             JOIN booking_details bd ON b.id = bd.booking_id
             JOIN tables t ON bd.table_id = t.id
             JOIN stores s ON b.store_id = s.id
@@ -22,7 +29,7 @@ module.exports = {
                 e.status = $3 AND
                 (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
             WHERE b.member_id = $1
-            GROUP BY b.id, b.order_no, b.reservation_date, s.name, s.image, so.name
+            GROUP BY b.id, b.order_no, b.reservation_date, s.name, s.image, so.name, tc.total_table_capacity
             ORDER BY b.reservation_date DESC, b.order_no DESC
         `, [memberId, sails.config.imagePath, 1]);
 
