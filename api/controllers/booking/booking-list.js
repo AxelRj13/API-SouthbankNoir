@@ -7,7 +7,7 @@ module.exports = {
                 b.order_no,
                 s.name as store_name,
                 so.name as status,
-                t.name as table_name,
+                string_agg(t.name || ' ' || t.table_no, ' | ') as table_name,
                 t.capacity as table_capacity,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 $2 || s.image as store_image,
@@ -22,7 +22,7 @@ module.exports = {
                 e.status = $3 AND
                 (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
             WHERE b.member_id = $1
-            GROUP BY b.id, b.order_no, b.reservation_date, s.name, s.image, t.name, t.capacity, so.name
+            GROUP BY b.id, b.order_no, b.reservation_date, s.name, s.image, t.name, t.table_no, t.capacity, so.name
             ORDER BY b.reservation_date DESC, b.order_no DESC
         `, [memberId, sails.config.imagePath, 1]);
 
