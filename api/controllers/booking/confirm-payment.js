@@ -52,7 +52,7 @@ module.exports = {
         var isExpired = false;
         var isPaid = false;
         var errorMsg;
-        await fetch(sails.config.paymentAPIURL + existingBookings.rows[0].order_no + '/status', options)
+        await fetch(sails.config.paymentAPIURL + existingBookings.rows[0].order_no + sails.config.orderTag + '/status', options)
             .then(res => res.json())
             .then(json => {
                 if (json.status_code == '201' || json.status_code == '200') {

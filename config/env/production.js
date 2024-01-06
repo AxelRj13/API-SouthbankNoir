@@ -408,5 +408,6 @@ module.exports = {
 
   },
   tokenExpired: 60,
-  isProd: true
+  isProd: true,
+  orderTag: ''
 };
