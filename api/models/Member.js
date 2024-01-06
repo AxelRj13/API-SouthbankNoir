@@ -32,7 +32,7 @@ module.exports = {
         type: 'string'
       },
       date_of_birth: {
-        type: 'string',
+        type: 'number',
         columnType: 'date'
       },
       photo: {
