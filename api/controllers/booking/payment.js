@@ -38,7 +38,7 @@ module.exports = {
                 .then(json => {
                     if (json.status_code == '201' || json.status_code == '200') {
                         vaNumber = json.va_numbers.filter((va) => va.bank == 'bca')[0].va_number;
-                        isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no;
+                        isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
                     } else if (json.status_code == '407' && json.transaction_status == 'expire') {
                         isExpired = true;
                         errorMsg = "Transaction already expired, please create another.";

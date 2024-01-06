@@ -56,7 +56,7 @@ module.exports = {
             .then(res => res.json())
             .then(json => {
                 if (json.status_code == '201' || json.status_code == '200') {
-                    isPaid = json.transaction_status == 'settlement' && json.order_id == existingBookings.rows[0].order_no;
+                    isPaid = json.transaction_status == 'settlement' && json.order_id == existingBookings.rows[0].order_no + sails.config.orderTag;
                 } else if (json.status_code == '407' && json.transaction_status == 'expire') {
                     isExpired = true;
                     errorMsg = "Transaction already expired, please create another.";
