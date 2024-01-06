@@ -205,7 +205,7 @@ module.exports = {
             let parameter = JSON.stringify({
                 payment_type: "bank_transfer",
                 transaction_details: {
-                    order_id: orderNumber,
+                    order_id: orderNumber + sails.config.orderTag,
                     gross_amount: subtotal - discount
                 },
                 item_details: paymentDetailsPayload,

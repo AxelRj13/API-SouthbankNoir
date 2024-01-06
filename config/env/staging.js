@@ -41,5 +41,6 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   paymentRedirectURL: 'https://app.sandbox.midtrans.com/snap/v3/redirection/',
   serverKey: 'SB-Mid-server-BaTQ6xxHAHZPOe0LF6-mukEb',
   clientKey: 'SB-Mid-client-HcQTASGdK78b2lLr',
-  isProd: false
+  isProd: false,
+  orderTag: '-local'
 });
