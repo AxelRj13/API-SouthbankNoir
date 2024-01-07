@@ -107,7 +107,7 @@ module.exports = {
                 var totalSpent = 0;
                 if (userMemberships.rows.length <= 0) {
                     // if memberships not exist, create new one
-                    let newMembership = await sails.sendNativeQuery(`
+                    await sails.sendNativeQuery(`
                         INSERT INTO user_memberships (
                             member_id, membership_tier_id, points, total_spent, status,
                             created_by, updated_by, created_at, updated_at
