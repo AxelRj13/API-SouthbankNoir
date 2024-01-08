@@ -62,7 +62,7 @@ module.exports = {
             )`;
         }
 
-        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, new Date()]);
+        let result = await sails.sendNativeQuery(query + ` ORDER BY start_date`, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date())]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);
