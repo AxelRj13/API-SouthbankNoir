@@ -43,5 +43,6 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   serverKey: 'SB-Mid-server-BaTQ6xxHAHZPOe0LF6-mukEb',
   clientKey: 'SB-Mid-client-HcQTASGdK78b2lLr',
   isProd: false,
-  orderTag: '-staging'
+  orderTag: '-staging',
+  paymentExpiry: 60 //minutes
 });

@@ -12,6 +12,7 @@ module.exports = {
         let memberId = this.req.headers['member-id'];
         let userLoginName = this.req.headers['user-login-name'];
         let storeId = payload.store_id;
+        let paymentMethodId = payload.payment_method;
         let bookingDetails = payload.details;
         let promoCode = payload.promo_code;
         let notes = payload.notes;
@@ -93,7 +94,7 @@ module.exports = {
 
             // calculate subtotal
             var subtotal = 0;
-            var paymentDetailsPayload = [];
+            var itemDetailsPayload = [];
             for (var i = 0; i < bookingDetails.length; i++) {
                 subtotal += bookingDetails[i].total;
 
@@ -103,7 +104,7 @@ module.exports = {
                     WHERE t.id = $1
                 `, [bookingDetails[i].table_id]);
 
-                paymentDetailsPayload.push({
+                itemDetailsPayload.push({
                     id: bookingDetails[i].table_id,
                     name: 'Table ' + table.rows[0].table_no + ' ' + table.rows[0].name,
                     price: bookingDetails[i].total,
@@ -180,8 +181,9 @@ module.exports = {
                 if (promoType == 'percentage') {
                     discount = parseInt((promoValue/100) * subtotal);
                 }
+
                 // add discount item for payment payload
-                paymentDetailsPayload.push({
+                itemDetailsPayload.push({
                     name: 'discount',
                     price: discount * -1,
                     quantity: 1,
@@ -189,6 +191,17 @@ module.exports = {
                     category: 'Reservation',
                     merchant_name: 'SouthbankNoir'
                 });
+            }
+
+            // get payment method data
+            let paymentMethod = await sails.sendNativeQuery(`
+                SELECT pm.payment_type, pm.bank_transfer_name
+                FROM payment_methods pm
+                WHERE pm.id = $1 AND pm.status = $2
+            `, [paymentMethodId, 1]);
+
+            if (paymentMethod.rows.length <= 0) {
+                return sails.helpers.convertResult(0, 'Payment Method Not Found / Inactive', null, this.res);
             }
 
             // connect to payment gateway
@@ -199,66 +212,125 @@ module.exports = {
                 clientKey : sails.config.clientKey
             });
 
-            let parameter = JSON.stringify({
-                payment_type: "bank_transfer",
+            var isError = false;
+            var errorMsg;
+            // build payload for midtrans
+            var midtransPayload = {
                 transaction_details: {
                     order_id: orderNumber + sails.config.orderTag,
                     gross_amount: subtotal - discount
                 },
-                item_details: paymentDetailsPayload,
+                item_details: itemDetailsPayload,
                 customer_details: {
                     first_name: member.rows[0].first_name,
                     last_name: member.rows[0].last_name,
                     email: member.rows[0].email,
                     phone: member.rows[0].phone
                 },
-                bank_transfer: {
-                    bank: "bca"
-                },
+                payment_type: paymentMethod.rows[0].payment_type,
                 custom_expiry: {
-                    expiry_duration: 60,
+                    expiry_duration: sails.config.paymentExpiry,
                     unit: "minute"
                 }
-            });
+            };
+            
+            if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
+                midtransPayload.bank_transfer = {
+                    bank: paymentMethod.rows[0].bank_transfer_name
+                };
+            } else if (paymentMethod.rows[0].payment_type == 'echannel') {
+                midtransPayload.echannel = {
+                    bill_info1 : "Payment:",
+                    bill_info2 : "Online purchase"
+                };
+            } else if (paymentMethod.rows[0].payment_type == 'gopay') {
+                midtransPayload.gopay = {
+                    enable_callback: true,
+                    callback_url: "someapps://callback"
+                };
+            } else if (paymentMethod.rows[0].payment_type == 'shopeepay') {
+                midtransPayload.shopeepay = {
+                    callback_url: "someapps://callback"
+                }
+            } else if (paymentMethod.rows[0].payment_type == 'credit_card') {
+                // authenticate credit card
+                if (payload.card_number && payload.card_exp_month && payload.card_exp_year && payload.card_cvv) {
+                    const options = {
+                        method: 'GET',
+                        headers: {
+                            accept: 'application/json',
+                            'content-type': 'application/json',
+                            authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
+                        }
+                    };
 
+                    await fetch(sails.config.paymentAPIURL + 'token?client_key=' + sails.config.clientKey + '&card_number=' + payload.card_number + '&card_exp_month=' + payload.card_exp_month + '&card_exp_year=' + payload.card_exp_year + '&card_cvv=' + payload.card_cvv, options)
+                        .then(res => res.json())
+                        .then(json => {
+                            if (json.status_code == '200') {
+                                midtransPayload.credit_card = {
+                                    token_id: json.token_id,
+                                    authentication: true
+                                };
+                            } else {
+                                isError = true;
+                                errorMsg = json.status_message;
+                            }
+                        })
+                        .catch(err => {
+                            sails.log('error: ' + err);
+                            errorMsg = err.toString();
+                            isError = true;
+                        });
+                    
+                    if (isError) {
+                        return sails.helpers.convertResult(0, errorMsg, null, this.res);
+                    }
+                } else {
+                    return sails.helpers.convertResult(0, 'Credit card information cannot be empty', null, this.res);
+                }
+            }
+
+            // charge midtrans transaction
             let paymentResult;
-            var isError = false;
-            var errorMsg;
-            await core.charge(parameter)
-                .then((chargeResponse) => {
-                    if (chargeResponse.status_code !== '201') {
-                        errorMsg = 'Payment Transaction Error due to: ' + chargeResponse.status_message;
-                        isError = true;
-                    } else {
-                        paymentResult = chargeResponse;
-                    }
-                })
-                .catch((err) => {
-                    errorMsg = err.message;
-                    if (err.ApiResponse) {
-                        errorMsg = err.ApiResponse.status_message;
-                    }
-                    console.error('Error: ' + errorMsg);
+            await core.charge(JSON.stringify({...midtransPayload})).then((chargeResponse) => {
+                if (chargeResponse.status_code !== '201') {
+                    errorMsg = 'Payment Transaction error due to: ' + chargeResponse.status_message;
                     isError = true;
-                });
-            ;
+                } else {
+                    paymentResult = chargeResponse;
+                }
+            })
+            .catch((err) => {
+                errorMsg = err.message;
+                if (err.ApiResponse) {
+                    errorMsg = err.ApiResponse.status_message;
+                }
+                console.error('Error: ' + errorMsg);
+                isError = true;
+            });
             
             if (isError) {
                 return sails.helpers.convertResult(0, errorMsg, null, this.res);
             }
 
+            var deeplinkRedirect = null;
+            if (paymentResult.actions) {
+                deeplinkRedirect = paymentResult.actions.filter((action) => action.name == 'deeplink-redirect')[0].url;
+            }
+
             // create booking data
             let booking = await sails.sendNativeQuery(`
                 INSERT INTO bookings (
-                    store_id, member_id, status_order, order_no, reservation_date, 
-                    contact_person_name, contact_person_phone, notes, discount, promo_code_applied,
-                    created_by, updated_by, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, $12)
+                    store_id, member_id, payment_method, status_order, order_no, reservation_date, 
+                    contact_person_name, contact_person_phone, notes, subtotal, discount, promo_code_applied,
+                    midtrans_trx_id, deeplink_redirect, created_by, updated_by, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $15, $16, $16)
                 RETURNING id
             `, [
-                storeId, memberId, pendingPaymentStatusId.rows[0].id, orderNumber, reservationDate,
-                cpName, cpPhone, (notes ? notes : null), (discount > 0 ? discount : null), (promoCode && discount > 0 ? promoCode : null),
-                memberId, currentDate
+                storeId, memberId, paymentMethodId, pendingPaymentStatusId.rows[0].id, orderNumber, reservationDate,
+                cpName, cpPhone, (notes ? notes : null), subtotal, (discount > 0 ? discount : null), (promoCode && discount > 0 ? promoCode : null),
+                paymentResult.transaction_id, deeplinkRedirect, memberId, currentDate
             ]).usingConnection(db);
 
             let newBookingId = booking.rows[0].id;
@@ -268,14 +340,6 @@ module.exports = {
                     VALUES ($1, $2, $3, $4, $4, $5, $5)
                 `, [newBookingId, bookingDetails[i].table_id, bookingDetails[i].total, memberId, currentDate]).usingConnection(db);
             }
-
-            // update subtotal and payment trx id
-            await sails.sendNativeQuery(`
-                UPDATE bookings
-                SET subtotal = $1,
-                    midtrans_trx_id = $2
-                WHERE id = $3
-            `, [subtotal, paymentResult.transaction_id, newBookingId]).usingConnection(db);
 
             // save promo / coupon usage
             if (appliedPromoId) {
