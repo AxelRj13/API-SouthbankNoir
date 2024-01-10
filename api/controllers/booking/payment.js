@@ -12,7 +12,7 @@ module.exports = {
         let pendingPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
         let failedPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['failed']);
         let bookings = await sails.sendNativeQuery(`
-            SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id
+            SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id, b.payment_method
             FROM bookings b
             WHERE b.id = $1 AND b.status_order = $2 AND b.member_id = $3
         `, [booking_id, pendingPaymentStatusId.rows[0].id, memberId]);
@@ -28,6 +28,17 @@ module.exports = {
                     authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
                 }
             };
+            
+            let paymentMethod = await sails.sendNativeQuery(`
+                SELECT pm.payment_type, pm.bank_transfer_name
+                FROM payment_methods pm
+                WHERE pm.status = $1 AND pm.id = $2
+            `, [1, bookings.rows[0].payment_method]);
+
+            if (paymentMethod.rows.length <= 0) {
+                return sails.helpers.convertResult(0, 'Payment Method Not Found / Inactive', null, this.res);
+            }
+
             var isError = false;
             var isExpired = false;
             var isPaid = false;
@@ -37,7 +48,11 @@ module.exports = {
                 .then(res => res.json())
                 .then(json => {
                     if (json.status_code == '201' || json.status_code == '200') {
-                        vaNumber = json.va_numbers.filter((va) => va.bank == 'bca')[0].va_number;
+                        if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
+                            vaNumber = json.va_numbers.filter((va) => va.bank == paymentMethod.rows[0].bank_transfer_name)[0].va_number;
+                        } else if (paymentMethod.rows[0].payment_type == 'echannel') {
+                            vaNumber = json.biller_code + " " + json.bill_key;
+                        }
                         isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
                     } else if (json.status_code == '407' && json.transaction_status == 'expire') {
                         isExpired = true;
