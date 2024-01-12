@@ -255,6 +255,7 @@ module.exports = {
             } else if (paymentMethod.rows[0].payment_type == 'credit_card') {
                 // authenticate credit card
                 if (payload.card_number && payload.card_exp_month && payload.card_exp_year && payload.card_cvv) {
+                    const fetch = require('node-fetch');
                     const options = {
                         method: 'GET',
                         headers: {
@@ -317,6 +318,8 @@ module.exports = {
             var deeplinkRedirect = null;
             if (paymentResult.actions) {
                 deeplinkRedirect = paymentResult.actions.filter((action) => action.name == 'deeplink-redirect')[0].url;
+            } else if (paymentResult.redirect_url) {
+                deeplinkRedirect = paymentResult.redirect_url;
             }
 
             // create booking data

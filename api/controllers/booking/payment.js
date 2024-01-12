@@ -54,7 +54,7 @@ module.exports = {
                             vaNumber = json.va_numbers.filter((va) => va.bank == paymentMethod.rows[0].bank_transfer_name)[0].va_number;
                         } else if (paymentMethod.rows[0].payment_type == 'echannel') {
                             vaNumber = json.biller_code + " " + json.bill_key;
-                        } else if (paymentMethod.rows[0].payment_type == 'gopay' || paymentMethod.rows[0].payment_type == 'shopeepay') {
+                        } else if (paymentMethod.rows[0].payment_type == 'gopay' || paymentMethod.rows[0].payment_type == 'shopeepay' || paymentMethod.rows[0].payment_type == 'credit_card') {
                             deeplinkRedirect = bookings.rows[0].deeplink_redirect;
                         }
                         isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
