@@ -52,12 +52,16 @@ module.exports = {
         var isExpired = false;
         var isPaid = false;
         var errorMsg;
+        let receiptRefNo;
         await fetch(sails.config.paymentAPIURL + existingBookings.rows[0].order_no + sails.config.orderTag + '/status', options)
             .then(res => res.json())
             .then(json => {
                 if (json.status_code == '201' || json.status_code == '200') {
                     isPaid = json.transaction_status == 'settlement' && json.order_id == existingBookings.rows[0].order_no + sails.config.orderTag;
-                } else if (json.status_code == '407' && json.transaction_status == 'expire') {
+                    if (isPaid && json.payment_type == 'shopeepay') {
+                        receiptRefNo = json.shopeepay_reference_number;
+                    }
+                } else if (json.status_code == '407' || json.transaction_status == 'expire') {
                     isExpired = true;
                     errorMsg = "Transaction already expired, please create another.";
                 } else {
@@ -150,12 +154,13 @@ module.exports = {
             await sails.sendNativeQuery(`
                 UPDATE bookings 
                 SET status_order = $1,
-                    updated_at = $2
-                WHERE id = $3
-            `, [statusId.rows[0].id, new Date(), booking_id]);
+                    receipt_ref_no = $2,
+                    updated_at = $3
+                WHERE id = $4
+            `, [statusId.rows[0].id, (receiptRefNo) ? receiptRefNo : null, new Date(), booking_id]);
 
             return sails.helpers.convertResult(1, 'Booking Successfully Paid', {
-                receipt_ref_number: null,
+                receipt_ref_number: (receiptRefNo) ? receiptRefNo : null,
                 booking_no: existingBookings.rows[0].order_no,
                 reservation_date: existingBookings.rows[0].reservation_date,
                 table_name: existingBookings.rows[0].table_name + ' - Table ' + existingBookings.rows[0].table_no,
