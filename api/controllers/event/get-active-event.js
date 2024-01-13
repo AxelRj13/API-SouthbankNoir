@@ -32,6 +32,12 @@ module.exports = {
                     END
                 ) as reservation_date,
                 (
+                    CASE WHEN start_date > $3
+                    THEN to_char(start_date, 'Dy, DD Mon YYYY')
+                    ELSE to_char($3, 'Dy, DD Mon YYYY')
+                    END
+                ) as reservation_date_display,
+                (
                     CASE WHEN (
                         SELECT count(DISTINCT t1.id) 
                         FROM tables t1 
