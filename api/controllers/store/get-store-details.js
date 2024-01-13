@@ -12,13 +12,15 @@ module.exports = {
         let store = await sails.sendNativeQuery(`
             SELECT name,
                 address,
-                $1 || latitude || ',' || longitude as "direction",
-                $2 || phone || $3 as "phone",
-                $4 || image as "image"
+                $1 || latitude || ',' || longitude as "android_direction",
+                $2 || latitude || ',' || longitude as "ios_direction",
+                $3 || phone || $4 as "phone",
+                $5 || image as "image"
             FROM stores
-            WHERE id = $5
+            WHERE id = $6
         `, [
             'https://www.google.com/maps/dir/?api=1&destination=',
+            'https://maps.apple.com/?q=',
             'https://api.whatsapp.com/send/?phone=',
             '&text&type=phone_number&app_absent=0',
             sails.config.imagePath,
