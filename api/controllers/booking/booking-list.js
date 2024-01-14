@@ -17,7 +17,9 @@ module.exports = {
                 tc.total_table_capacity as table_capacity,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 $2 || s.image as store_image,
-                string_agg(DISTINCT e.name, ', ') as events
+                string_agg(DISTINCT e.name, ', ') as events,
+                to_char(b.created_at, 'DD Mon YYYY, HH24:MI') as created_date,
+                to_char(b.expiry_date, 'DD Mon YYYY, HH24:MI') as expiry_date
             FROM bookings b
             JOIN TableCapacityCTE tc ON b.id = tc.booking_id
             JOIN booking_details bd ON b.id = bd.booking_id
@@ -56,6 +58,8 @@ module.exports = {
                     store_image: bookingData.store_image,
                     events: bookingData.events ? bookingData.events : '-',
                     reservation_date: bookingData.reservation_date,
+                    created_date: bookingData.created_date,
+                    expiry_date: (bookingData.status.toLowerCase() == 'pending payment') ? bookingData.expiry_date : null,
                     table_name: bookingData.table_name,
                     table_capacity: 'Max ' + bookingData.table_capacity + ' people'
                 });
