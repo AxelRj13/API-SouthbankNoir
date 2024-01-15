@@ -28,7 +28,7 @@ module.exports = function unauthorized() {
   sails.log.verbose('Ran custom response: res.unauthorized()');
 
   if (req.wantsJSON) {
-    return res.status(401).send({
+    return res.status(200).send({
       status: 0,
       message: 'The email/password is incorrect.',
       data: [],
