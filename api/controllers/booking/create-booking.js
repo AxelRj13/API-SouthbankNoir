@@ -254,6 +254,7 @@ module.exports = {
                 }
             } else if (paymentMethod.rows[0].payment_type == 'credit_card') {
                 // authenticate credit card
+                sails.log(payload);''
                 if (payload.card_number && payload.card_exp_month && payload.card_exp_year && payload.card_cvv) {
                     const fetch = require('node-fetch');
                     const options = {
