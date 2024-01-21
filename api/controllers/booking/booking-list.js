@@ -51,7 +51,7 @@ module.exports = {
                     }
                     dateTemp = bookingData.reservation_date;
                 }
-                
+
                 list.push({
                     booking_id: bookingData.id,
                     booking_no: bookingData.order_no,
@@ -64,7 +64,7 @@ module.exports = {
                     expiry_date: (bookingData.status.toLowerCase() == 'pending payment') ? bookingData.expiry_date : null,
                     table_name: bookingData.table_name,
                     table_capacity: 'Max ' + bookingData.table_capacity + ' people',
-                    redirect_url: bookingData.deeplink_redirect
+                    redirect_url: (bookingData.status.toLowerCase() == 'pending payment') ? bookingData.deeplink_redirect : null
                 });
             }
 
