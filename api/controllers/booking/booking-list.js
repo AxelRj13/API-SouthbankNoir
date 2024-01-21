@@ -19,7 +19,8 @@ module.exports = {
                 $2 || s.image as store_image,
                 string_agg(DISTINCT e.name, ', ') as events,
                 to_char(b.created_at, 'DD Mon YYYY, HH24:MI') as created_date,
-                to_char(b.expiry_date, 'DD Mon YYYY, HH24:MI') as expiry_date
+                to_char(b.expiry_date, 'DD Mon YYYY, HH24:MI') as expiry_date,
+                b.deeplink_redirect
             FROM bookings b
             JOIN TableCapacityCTE tc ON b.id = tc.booking_id
             JOIN booking_details bd ON b.id = bd.booking_id
@@ -50,6 +51,7 @@ module.exports = {
                     }
                     dateTemp = bookingData.reservation_date;
                 }
+                
                 list.push({
                     booking_id: bookingData.id,
                     booking_no: bookingData.order_no,
@@ -61,7 +63,8 @@ module.exports = {
                     created_date: bookingData.created_date,
                     expiry_date: (bookingData.status.toLowerCase() == 'pending payment') ? bookingData.expiry_date : null,
                     table_name: bookingData.table_name,
-                    table_capacity: 'Max ' + bookingData.table_capacity + ' people'
+                    table_capacity: 'Max ' + bookingData.table_capacity + ' people',
+                    redirect_url: bookingData.deeplink_redirect
                 });
             }
 

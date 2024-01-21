@@ -367,7 +367,7 @@ module.exports = {
                 }
             }
 
-            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId}, this.res);
+            return sails.helpers.convertResult(1, 'Booking Successfully Created', {id: newBookingId, redirect_url: deeplinkRedirect}, this.res);
         })
     }
   };
