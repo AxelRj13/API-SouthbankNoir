@@ -10,7 +10,7 @@ module.exports = {
         var result = [];
         let memberId = this.req.headers['member-id'];
         let pendingPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
-        let failedPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['failed']);
+        let expiredPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['expired']);
         let bookings = await sails.sendNativeQuery(`
             SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id, b.payment_method, b.deeplink_redirect
             FROM bookings b
@@ -79,7 +79,7 @@ module.exports = {
                     SET status_order = $1,
                         updated_at = $3
                     WHERE id = $2
-                `, [failedPaymentStatusId.rows[0].id, booking_id, new Date()]);
+                `, [expiredPaymentStatusId.rows[0].id, booking_id, new Date()]);
             }
 
             if (isError || isExpired) {

@@ -77,13 +77,13 @@ module.exports = {
         
         // set booking status to failed if payment is expired
         if (isExpired) {
-            let failedPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['failed']);
+            let expiredPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['expired']);
             await sails.sendNativeQuery(`
                 UPDATE bookings
                 SET status_order = $1,
                     updated_at = $3
                 WHERE id = $2
-            `, [failedPaymentStatusId.rows[0].id, booking_id, new Date()]);
+            `, [expiredPaymentStatusId.rows[0].id, booking_id, new Date()]);
         }
 
         if (isError || isExpired) {
