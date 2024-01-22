@@ -57,11 +57,11 @@ module.exports = {
             .then(res => res.json())
             .then(json => {
                 if (json.status_code == '201' || json.status_code == '200') {
-                    isPaid = json.transaction_status == 'settlement' && json.order_id == existingBookings.rows[0].order_no + sails.config.orderTag;
+                    isPaid = (json.transaction_status == 'settlement' || json.transaction_status == 'capture') && json.order_id == existingBookings.rows[0].order_no + sails.config.orderTag;
                     if (isPaid && json.payment_type == 'shopeepay') {
                         receiptRefNo = json.shopeepay_reference_number;
                     }
-                } else if (json.status_code == '407' || json.transaction_status == 'expire') {
+                } else if (json.status_code == '407' || json.transaction_status == 'expire' || json.transaction_status == 'deny') {
                     isExpired = true;
                     errorMsg = "Transaction already expired, please create another.";
                 } else {

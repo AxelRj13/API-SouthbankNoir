@@ -57,8 +57,8 @@ module.exports = {
                         } else if (paymentMethod.rows[0].payment_type == 'gopay' || paymentMethod.rows[0].payment_type == 'shopeepay' || paymentMethod.rows[0].payment_type == 'credit_card') {
                             deeplinkRedirect = bookings.rows[0].deeplink_redirect;
                         }
-                        isPaid = json.status_code == '200' && json.transaction_status == 'settlement' && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
-                    } else if (json.status_code == '407' || json.transaction_status == 'expire') {
+                        isPaid = json.status_code == '200' && (json.transaction_status == 'settlement' || json.transaction_status == 'capture') && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
+                    } else if (json.status_code == '407' || json.transaction_status == 'expire' || json.transaction_status == 'deny') {
                         isExpired = true;
                         errorMsg = "Transaction already expired, please create another.";
                     } else {
