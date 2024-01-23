@@ -5,7 +5,7 @@ module.exports = {
     description: 'Log in using the provided email and password combination.',
     inputs: {
       email: {
-        description: 'The email to try in this attempt, e.g. "irl@example.com".',
+        description: 'Fill with email or phone number of registered user',
         type: 'string',
         required: true
       },
@@ -61,7 +61,13 @@ module.exports = {
       // regardless of which database we're using)
       var userRecord = await Member.findOne({
         select: ['id', 'email', 'first_name', 'last_name', 'password', 'photo', 'phone', 'gender', 'city', 'date_of_birth'],
-        where: {email: email.toLowerCase(), status: 1}
+        where: {
+          status: 1,
+          or: [
+            { email: email.toLowerCase() },
+            { phone: email }
+          ]
+        }
       });
   
       // If there was no matching user, respond thru the "badCombo" exit.
