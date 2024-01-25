@@ -45,9 +45,10 @@ module.exports = {
             JOIN coupon_members cm ON c.id = cm.coupon_id
             WHERE c.status = $1 AND 
                 c.validity_date >= $2 AND 
-                cm.member_id = $4
+                cm.member_id = $4 AND 
+                cm.usage = $5
             ORDER BY c.validity_date
-        `, [1, new Date(), sails.config.imagePath, this.req.headers['member-id']]);
+        `, [1, new Date(), sails.config.imagePath, this.req.headers['member-id'], 0]);
 
         if (myCoupons.rows.length > 0) {
             result.my_coupons = myCoupons.rows;
