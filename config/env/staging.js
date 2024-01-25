@@ -44,5 +44,5 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   clientKey: 'SB-Mid-client-HcQTASGdK78b2lLr',
   isProd: false,
   orderTag: '-staging',
-  paymentExpiry: 60 //minutes
+  paymentExpiry: 5 //minutes
 });
