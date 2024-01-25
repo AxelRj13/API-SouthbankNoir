@@ -26,7 +26,7 @@ module.exports = {
             WHERE c.status = $1 AND 
                 c.validity_date >= $2
             ORDER BY c.validity_date
-        `, [1, new Date(), sails.config.imagePath]);
+        `, [1, await sails.helpers.convertDate(new Date()), sails.config.imagePath]);
 
         if (coupons.rows.length > 0) {
             for (const data of coupons.rows) {
@@ -48,7 +48,7 @@ module.exports = {
                 cm.member_id = $4 AND 
                 cm.usage = $5
             ORDER BY c.validity_date
-        `, [1, new Date(), sails.config.imagePath, this.req.headers['member-id'], 0]);
+        `, [1, await sails.helpers.convertDate(new Date()), sails.config.imagePath, this.req.headers['member-id'], 0]);
 
         if (myCoupons.rows.length > 0) {
             result.my_coupons = myCoupons.rows;
