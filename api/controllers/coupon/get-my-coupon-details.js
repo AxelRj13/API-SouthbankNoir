@@ -23,7 +23,7 @@ module.exports = {
                 cm.member_id = $4 AND 
                 cm.status = $2 AND
                 c.validity_date >= $5 AND
-                c.usage = $6
+                cm.usage = $6
         `, [sails.config.imagePath, 1, id, this.req.headers['member-id'], await sails.helpers.convertDate(new Date()), 0]);
 
         if (result.rows.length > 0) {
