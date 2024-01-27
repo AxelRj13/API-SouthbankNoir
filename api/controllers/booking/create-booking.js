@@ -76,7 +76,7 @@ module.exports = {
             var lastOrderNumber = await sails.sendNativeQuery(`
                 SELECT order_no
                 FROM bookings
-                WHERE created_at::date = $1
+                WHERE created_at::date = $1 AND order_no ilike 'trn-sbn-%'
                 ORDER BY id DESC
                 LIMIT 1
             `, [currentDate]).usingConnection(db);
