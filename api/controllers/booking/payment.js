@@ -120,7 +120,7 @@ module.exports = {
 
             return sails.helpers.convertResult(1, '', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Booking not found', null, this.res);
+            return sails.helpers.convertResult(0, 'Sorry your booking has expired, please create again.', null, this.res);
         }
     }
   };
