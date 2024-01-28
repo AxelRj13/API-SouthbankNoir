@@ -46,6 +46,7 @@ module.exports.routes = {
   // Event
   'POST /api/v1/event/today/get': { action: 'event/get-today-event' },
   'POST /api/v1/event/get': { action: 'event/get-active-event' },
+  'POST /api/v1/event/details': { action: 'event/get-details-event' },
 
   // Complaint
   'POST /api/v1/complaint/create': { action: 'complaint/create-complaint' },
