@@ -4,10 +4,23 @@ module.exports = {
         let memberId = this.req.headers['member-id'];
         let bookings = await sails.sendNativeQuery(`
             WITH TableCapacityCTE AS (
-                SELECT bd.booking_id, SUM(t.capacity) as total_table_capacity
-                FROM booking_details bd
-                JOIN tables t ON bd.table_id = t.id
-                GROUP BY bd.booking_id
+                WITH RankedTableEvents AS (
+                    SELECT 
+                        bd.booking_id,
+                        COALESCE(te.capacity, t.capacity) AS total_table_capacity,
+                        ROW_NUMBER() OVER (PARTITION BY bd.booking_id, t.id ORDER BY COALESCE(te.capacity, t.capacity) DESC) AS rn
+                    FROM booking_details bd
+                    JOIN bookings b ON bd.booking_id = b.id
+                    JOIN tables t ON bd.table_id = t.id
+                    LEFT JOIN table_events te ON t.id = te.table_id AND te.status = $3
+                    LEFT JOIN events e ON 
+                        te.event_id = e.id AND 
+                        b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date)
+                )
+                SELECT booking_id, SUM(total_table_capacity) as total_table_capacity
+                FROM RankedTableEvents
+                WHERE rn = 1
+                GROUP BY booking_id
             )
             SELECT b.id, 
                 b.order_no,
