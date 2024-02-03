@@ -51,9 +51,51 @@ module.exports = {
                         t.name,
                         t.table_no,
                         'Table ' || t.table_no as "table_no",
-                        t.capacity || ' people' as "capacity",
-                        t.down_payment,
-                        t.minimum_spend,
+                        COALESCE((
+                            WITH TableCapacityCTE AS (
+                                SELECT te.capacity
+                                FROM table_events te
+                                JOIN events e ON te.event_id = e.id
+                                WHERE te.table_id = t.id AND 
+                                    e.status = $2 AND 
+                                    te.status = $2 AND 
+                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                ORDER BY te.capacity DESC
+                                LIMIT 1
+                            )
+                            SELECT tc.capacity
+                            FROM TableCapacityCTE tc
+                        ), t.capacity) || ' people' AS "capacity",
+                        COALESCE((
+                            WITH TableDownPaymentCTE AS (
+                                SELECT te.down_payment
+                                FROM table_events te
+                                JOIN events e ON te.event_id = e.id
+                                WHERE te.table_id = t.id AND 
+                                    e.status = $2 AND 
+                                    te.status = $2 AND 
+                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                ORDER BY te.down_payment DESC
+                                LIMIT 1
+                            )
+                            SELECT tc.down_payment
+                            FROM TableDownPaymentCTE tc
+                        ), t.down_payment) AS "down_payment",
+                        COALESCE((
+                            WITH TableMinSpendCTE AS (
+                                SELECT te.minimum_spend
+                                FROM table_events te
+                                JOIN events e ON te.event_id = e.id
+                                WHERE te.table_id = t.id AND 
+                                    e.status = $2 AND 
+                                    te.status = $2 AND 
+                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                ORDER BY te.minimum_spend DESC
+                                LIMIT 1
+                            )
+                            SELECT tc.minimum_spend
+                            FROM TableMinSpendCTE tc
+                        ), t.minimum_spend) AS "minimum_spend",
                         (
                             CASE WHEN (
                                 SELECT b.id
