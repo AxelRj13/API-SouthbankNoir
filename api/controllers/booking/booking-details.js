@@ -52,15 +52,25 @@ module.exports = {
             var tableQty = 0;
             for (const bookingData of bookings.rows) {
                 let bookingDetails = await sails.sendNativeQuery(`
-                    SELECT t.name || ' ' || t.table_no as "table_name", 
-                        t.capacity || ' people' as "capacity",
-                        bd.total,
-                        t.minimum_spend
-                    FROM booking_details bd
-                    JOIN tables t ON bd.table_id = t.id
-                    WHERE bd.booking_id = $1
-                    ORDER BY t.table_no ASC
-                `, [booking_id]);
+                    WITH RankedTableEvents AS (
+                        SELECT t.name || ' ' || t.table_no as "table_name", 
+                            COALESCE(te.capacity, t.capacity) as capacity,
+                            bd.total,
+                            COALESCE(te.minimum_spend, t.minimum_spend) as minimum_spend
+                        FROM booking_details bd
+                        JOIN bookings b ON bd.booking_id = b.id
+                        JOIN tables t ON bd.table_id = t.id
+                        LEFT JOIN table_events te ON t.id = te.table_id AND te.status = $2
+                        LEFT JOIN events e ON 
+                            te.event_id = e.id AND 
+                            b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date)
+                        WHERE bd.booking_id = $1
+                        ORDER BY t.table_no ASC
+                    )
+                    SELECT table_name, MAx(capacity) || ' people' AS capacity, total, MAX(minimum_spend) AS minimum_spend
+                    FROM RankedTableEvents
+                    GROUP BY table_name, total
+                `, [booking_id, 1]);
 
                 if (bookingDetails.rows.length > 0) {
                     tableQty += bookingDetails.rows.length;
