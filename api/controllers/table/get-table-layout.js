@@ -104,11 +104,25 @@ module.exports = {
                                 WHERE b.status_order IN (SELECT so.id FROM status_orders so WHERE lower(so.name) IN ('pending payment', 'success')) AND b.reservation_date = $3
                             ) IS NOT NULL
                             THEN 0
-                            ELSE 1
+                            ELSE 
+                                COALESCE((
+                                    WITH TableStatusCTE AS (
+                                        SELECT te.status
+                                        FROM table_events te
+                                        JOIN events e ON te.event_id = e.id
+                                        WHERE te.table_id = t.id AND 
+                                            e.status = $2 AND 
+                                            $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                        ORDER BY te.status DESC
+                                        LIMIT 1
+                                    )
+                                    SELECT tc.status
+                                    FROM TableStatusCTE tc
+                                ), t.status)
                             END
                         ) as "is_available"
                     FROM tables t
-                    WHERE t.table_blueprint_id = $1 AND t.status = $2
+                    WHERE t.table_blueprint_id = $1
                     ORDER BY t.name, t.table_no ASC;
                 `, [layoutData.id, 1, date]);
 
