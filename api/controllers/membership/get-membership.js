@@ -56,6 +56,7 @@ module.exports = {
       result.total_spent_max = tiers.rows[0].total_spent_max;
       result.privacy_policy_url = 'https://southbanknoir.com/privacypolicy';
       result.tnc_url = 'https://southbanknoir.com/privacypolicy';
+      result.app_version = '1.0.0';
 
       return sails.helpers.convertResult(1, '', result, this.res);
     }
