@@ -117,8 +117,6 @@ module.exports = {
             if (promoCode) {
                 let storeId = existingBookings.rows[0].store_id;
                 let currentDate = new Date();
-                let appliedPromoId;
-                let appliedCouponId;
                 let promos = await sails.sendNativeQuery(`
                     SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                     FROM promos p
@@ -130,7 +128,13 @@ module.exports = {
                 `, [promoCode.toUpperCase(), 1, storeId, currentDate]);
 
                 if (promos.rows.length > 0) {
-                    appliedPromoId = promos.rows[0].id;
+                    // hard delete promo usage members
+                    await sails.sendNativeQuery(`
+                        DELETE FROM promo_usage_members 
+                        WHERE promo_id = $1 AND 
+                            member_id = $2 AND 
+                            booking_id = $3
+                    `, [promos.rows[0].id, memberId, booking_id]);
                 } else {
                     let coupons = await sails.sendNativeQuery(`
                         SELECT cm.id, c.value, c.type
@@ -146,24 +150,12 @@ module.exports = {
                     `, [memberId, 1, currentDate, promoCode.toUpperCase(), 0]);
 
                     if (coupons.rows.length > 0) {
-                        appliedCouponId = coupons.rows[0].id;
+                        await sails.sendNativeQuery(`
+                            UPDATE coupon_members
+                            SET usage = usage - $1
+                            WHERE id = $2
+                        `, [1, coupons.rows[0].id]);
                     }
-                }
-
-                if (appliedPromoId) {
-                    // hard delete promo usage members
-                    await sails.sendNativeQuery(`
-                        DELETE FROM promo_usage_members 
-                        WHERE promo_id = $1 AND 
-                            member_id = $2 AND 
-                            booking_id = $3
-                    `, [appliedPromoId, memberId, booking_id]);
-                } else if (appliedCouponId) {
-                    await sails.sendNativeQuery(`
-                        UPDATE coupon_members
-                        SET usage = usage - $1
-                        WHERE id = $2
-                    `, [1, appliedCouponId]);
                 }
             }
         }
