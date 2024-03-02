@@ -59,16 +59,17 @@ module.exports = {
             let pendingPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
             for (const data of bookingDetails) {
                 var existingBookings = await sails.sendNativeQuery(`
-                    SELECT b.id
+                    SELECT b.id, t.name as "table_name", t.table_no
                     FROM bookings b
                     JOIN booking_details bd ON bd.booking_id = b.id
+                    JOIN tables t ON bd.table_id = t.id
                     WHERE b.reservation_date = $1 AND 
                         bd.table_id = $2 AND 
                         b.status_order IN ($3, $4)
                 `, [reservationDate, data.table_id, successBookingStatusId.rows[0].id, pendingPaymentStatusId.rows[0].id]).usingConnection(db);
 
                 if (existingBookings.rows.length > 0) {
-                    return sails.helpers.convertResult(0, 'Table already booked, please try another table or change the date.', null, this.res);
+                    return sails.helpers.convertResult(0, 'Table ' + existingBookings.rows[0].table_name + ' ' + existingBookings.rows[0].table_no + ' already booked, please try another table or change the date.', null, this.res);
                 }
             }
 
