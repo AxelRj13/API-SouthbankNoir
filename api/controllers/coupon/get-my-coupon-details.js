@@ -15,7 +15,7 @@ module.exports = {
                 to_char(c.start_date, 'DD Mon YYYY') as start_date, 
                 to_char(c.validity_date, 'DD Mon YYYY') as end_date, 
                 c.value,
-                cm.code
+                UPPER(cm.code)
             FROM coupons c
             JOIN coupon_members cm ON c.id = cm.coupon_id
             WHERE c.status = $2 AND 

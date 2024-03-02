@@ -12,7 +12,8 @@ module.exports = {
                 p.description,
                 to_char(p.start_date, 'DD Mon') || ' - ' || to_char(p.end_date, 'DD Mon YYYY') as promo_date,
                 $2 || p.image as image,
-                p.minimum_spend
+                p.minimum_spend,
+                UPPER(p.code) as code
             FROM promos p
             JOIN promo_stores ps ON p.id = ps.promo_id AND ps.status = $1
             WHERE p.status = $1 AND p.id = $3

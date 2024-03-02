@@ -27,11 +27,11 @@ module.exports = {
                 SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                 FROM promos p
                 JOIN promo_stores ps ON ps.promo_id = p.id
-                WHERE p.code = $1 AND
+                WHERE UPPER(p.code) = $1 AND
                     p.status = $2 AND
                     ps.store_id = $3 AND
                     $4 BETWEEN p.start_date AND p.end_date
-            `, [code, 1, store_id, new Date()]);
+            `, [code.toUpperCase(), 1, store_id, new Date()]);
 
             if (promos.rows.length > 0) {
                 let promoUsage = await sails.sendNativeQuery(`
@@ -63,9 +63,9 @@ module.exports = {
                         c.status = $2 AND
                         c.start_date <= $3 AND
                         c.validity_date >= $3 AND
-                        cm.code = $4 AND 
+                        UPPER(cm.code) = $4 AND 
                         cm.usage = $5
-                `, [memberId, 1, new Date(), code, 0]);
+                `, [memberId, 1, new Date(), code.toUpperCase(), 0]);
 
                 if (coupons.rows.length > 0) {
                     promoValue = coupons.rows[0].value;

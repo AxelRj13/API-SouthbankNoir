@@ -127,11 +127,11 @@ module.exports = {
                     SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                     FROM promos p
                     JOIN promo_stores ps ON ps.promo_id = p.id
-                    WHERE p.code = $1 AND
+                    WHERE UPPER(p.code) = $1 AND
                         p.status = $2 AND
                         ps.store_id = $3 AND
                         $4 BETWEEN p.start_date AND p.end_date
-                `, [promoCode, 1, storeId, currentDate]).usingConnection(db);
+                `, [promoCode.toUpperCase(), 1, storeId, currentDate]).usingConnection(db);
 
                 if (promos.rows.length > 0) {
                     let promoUsage = await sails.sendNativeQuery(`
@@ -164,9 +164,9 @@ module.exports = {
                             c.status = $2 AND
                             c.start_date <= $3 AND
                             c.validity_date >= $3 AND
-                            cm.code = $4 AND
+                            UPPER(cm.code) = $4 AND
                             cm.usage = $5
-                    `, [memberId, 1, currentDate, promoCode, 0]).usingConnection(db);
+                    `, [memberId, 1, currentDate, promoCode.toUpperCase(), 0]).usingConnection(db);
 
                     if (coupons.rows.length <= 0) {
                         return sails.helpers.convertResult(0, 'Promo / Coupon code not valid or has reached maximum usage.', null, this.res);
