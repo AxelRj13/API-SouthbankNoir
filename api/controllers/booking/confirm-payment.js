@@ -1,5 +1,4 @@
 module.exports = {
-
     friendlyName: 'Create booking',
     inputs: {
         booking_id: {
@@ -7,7 +6,6 @@ module.exports = {
           required: true
         }
     },
-  
     fn: async function ({booking_id}) {
         let memberId = this.req.headers['member-id'];
         let member = await sails.sendNativeQuery(`SELECT id FROM members WHERE id = $1 AND status = $2`, [memberId, 1]);
@@ -44,7 +42,9 @@ module.exports = {
                 tc.total_table_capacity as capacity,
                 tc.minimum_spend,
                 b.subtotal, 
-                b.discount
+                b.discount,
+                b.promo_code_applied,
+                b.store_id
             FROM bookings b
             JOIN TableCapacityCTE tc ON b.id = tc.booking_id
             JOIN status_orders so ON b.status_order = so.id
@@ -111,6 +111,61 @@ module.exports = {
                     updated_at = $3
                 WHERE id = $2
             `, [expiredPaymentStatusId.rows[0].id, booking_id, new Date()]);
+
+            // reset promo / coupon usage for this booking if expired
+            let promoCode = existingBookings.rows[0].promo_code_applied;
+            if (promoCode) {
+                let storeId = existingBookings.rows[0].store_id;
+                let currentDate = new Date();
+                let appliedPromoId;
+                let appliedCouponId;
+                let promos = await sails.sendNativeQuery(`
+                    SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
+                    FROM promos p
+                    JOIN promo_stores ps ON ps.promo_id = p.id
+                    WHERE p.code = $1 AND
+                        p.status = $2 AND
+                        ps.store_id = $3 AND
+                        $4 BETWEEN p.start_date AND p.end_date
+                `, [promoCode, 1, storeId, currentDate]);
+
+                if (promos.rows.length > 0) {
+                    appliedPromoId = promos.rows[0].id;
+                } else {
+                    let coupons = await sails.sendNativeQuery(`
+                        SELECT cm.id, c.value, c.type
+                        FROM coupon_members cm
+                        JOIN coupons c ON cm.coupon_id = c.id
+                        WHERE cm.member_id = $1 AND
+                            cm.status = $2 AND
+                            c.status = $2 AND
+                            c.start_date <= $3 AND
+                            c.validity_date >= $3 AND
+                            cm.code = $4 AND
+                            cm.usage > $5
+                    `, [memberId, 1, currentDate, promoCode, 0]);
+
+                    if (coupons.rows.length > 0) {
+                        appliedCouponId = coupons.rows[0].id;
+                    }
+                }
+
+                if (appliedPromoId) {
+                    // hard delete promo usage members
+                    await sails.sendNativeQuery(`
+                        DELETE FROM promo_usage_members 
+                        WHERE promo_id = $1 AND 
+                            member_id = $2 AND 
+                            booking_id = $3
+                    `, [appliedPromoId, memberId, booking_id]);
+                } else if (appliedCouponId) {
+                    await sails.sendNativeQuery(`
+                        UPDATE coupon_members
+                        SET usage = usage - $1
+                        WHERE id = $2
+                    `, [1, appliedCouponId]);
+                }
+            }
         }
 
         if (isError || isExpired) {

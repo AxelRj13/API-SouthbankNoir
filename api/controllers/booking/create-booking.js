@@ -362,9 +362,10 @@ module.exports = {
                     // save coupon usage
                     await sails.sendNativeQuery(`
                         UPDATE coupon_members
-                        SET usage = usage + $1
+                        SET usage = usage + $1,
+                            updated_at = $3
                         WHERE id = $2
-                    `, [1, appliedCouponId]).usingConnection(db);
+                    `, [1, appliedCouponId, currentDate]).usingConnection(db);
                 }
             }
 
