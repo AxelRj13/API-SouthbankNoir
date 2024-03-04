@@ -33,9 +33,14 @@ module.exports = {
 async function uploadFileAndUpdateProfile(input) {
     return new Promise((resolve, reject) => {
         let memberId = input.headers['member-id'];
-        let fileName = 'profile_'+memberId;
+        var currentDate = new Date();
+        var currentDateString = currentDate.getDate().toString() < 10 ? '0'+currentDate.getDate().toString() : currentDate.getDate().toString();
+        var month = currentDate.getMonth() + 1;
+        var currentMonth = month < 10 ? '0'+month : month;
+        let fileName = 'profile_'+memberId+'_'+currentDateString + currentMonth.toString() + currentDate.getFullYear().toString() + currentDate.getTime();
+        let asssetImagePath = require('path').resolve(sails.config.appPath, 'assets/images/');
         input.file('file').upload({
-            dirname: require('path').resolve(sails.config.appPath, 'assets/images/profile'),
+            dirname: asssetImagePath + '/profile',
             saveAs: async function(file, callback) {
                 let allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
                 if (allowedTypes.indexOf(file.headers['content-type']) !== -1) {
@@ -50,6 +55,20 @@ async function uploadFileAndUpdateProfile(input) {
                 sails.log(err.message);
             }
             if (uploadedFiles.length > 0) {
+                // Delete the old image
+                let userPhoto = await sails.sendNativeQuery(`
+                    SELECT photo
+                    FROM members
+                    WHERE id = $1
+                `, [memberId]);
+                const fs = require('fs');
+                fs.unlink(asssetImagePath + '/' + userPhoto.rows[0].photo, (err) => {
+                    if (err) {
+                        sails.log(err);
+                        return;
+                    }
+                    sails.log('File deleted successfully');
+                });
                 sails.log(uploadedFiles[0]);
                 let image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
                 await sails.sendNativeQuery(`
