@@ -12,8 +12,10 @@ module.exports = {
     },
     fn: async function ({store_id, date}) {
         var result = [];
-        var originDate = date;
-        if (!date || (date == await sails.helpers.convertDate(new Date()))) {
+        let originDate = date;
+        let currentDate = await sails.helpers.convertDate(new Date());
+        if (!date || (date == currentDate)) {
+            originDate = currentDate;
             date = await sails.helpers.convertDateWithTime(new Date());
         }
         let layouts = await sails.sendNativeQuery(`
