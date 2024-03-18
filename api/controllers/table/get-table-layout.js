@@ -12,8 +12,9 @@ module.exports = {
     },
     fn: async function ({store_id, date}) {
         var result = [];
-        if (!date) {
-            date = await sails.helpers.convertDate(new Date());
+        var originDate = date;
+        if (!date || (date == await sails.helpers.convertDate(new Date()))) {
+            date = await sails.helpers.convertDateWithTime(new Date());
         }
         let layouts = await sails.sendNativeQuery(`
             SELECT tb.id, tb.name, tb.level, $3 || tb.image as "image"
@@ -29,7 +30,10 @@ module.exports = {
                     $4 || s.image as "store_image"
                 FROM stores s
                 LEFT JOIN events e ON s.id = e.store_id AND 
-                    ($2 BETWEEN date(e.start_date) AND date(e.end_date)) AND 
+                    (
+                        ($2 BETWEEN e.start_date AND e.end_date) OR 
+                        date($2) = date(e.start_date)
+                    ) AND 
                     e.status = $3
                 WHERE s.id = $1
                 GROUP BY s.id, s.name
@@ -38,9 +42,9 @@ module.exports = {
             result = {
                 store_id: storeAndDateInfo.rows[0].id,
                 store_name: storeAndDateInfo.rows[0].name,
-                store_iamge: storeAndDateInfo.rows[0].store_image,
+                store_image: storeAndDateInfo.rows[0].store_image,
                 date_display: storeAndDateInfo.rows[0].date_display,
-                date: date,
+                date: originDate,
                 events: storeAndDateInfo.rows[0].events ? storeAndDateInfo.rows[0].events : '-',
                 list: []
             };
@@ -59,7 +63,7 @@ module.exports = {
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
                                 ORDER BY te.capacity DESC
                                 LIMIT 1
                             )
@@ -74,7 +78,7 @@ module.exports = {
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
                                 ORDER BY te.down_payment DESC
                                 LIMIT 1
                             )
@@ -89,7 +93,7 @@ module.exports = {
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
                                 ORDER BY te.minimum_spend DESC
                                 LIMIT 1
                             )
@@ -112,7 +116,7 @@ module.exports = {
                                         JOIN events e ON te.event_id = e.id
                                         WHERE te.table_id = t.id AND 
                                             e.status = $2 AND 
-                                            $3 BETWEEN date(e.start_date) AND date(e.end_date)
+                                            ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
                                         ORDER BY te.status DESC
                                         LIMIT 1
                                     )

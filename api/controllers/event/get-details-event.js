@@ -58,7 +58,7 @@ module.exports = {
                 s.status = $1 AND 
                 e.end_date >= $3 AND
                 e.id = $4
-        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date()), id]);
+        `, [1, sails.config.imagePath, await sails.helpers.convertDateWithTime(new Date()), id]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows[0], this.res);

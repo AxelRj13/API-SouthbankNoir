@@ -45,8 +45,8 @@ module.exports = {
             JOIN stores s ON e.store_id = s.id
             WHERE e.status = $1 AND 
                 s.status = $1 AND 
-                $3 BETWEEN date(e.start_date) AND date(e.end_date)
-        `, [1, sails.config.imagePath, await sails.helpers.convertDate(new Date())]);
+                $3 BETWEEN e.start_date AND e.end_date
+        `, [1, sails.config.imagePath, await sails.helpers.convertDateWithTime(new Date())]);
 
         if (result.rows.length > 0) {
             return sails.helpers.convertResult(1, '', result.rows, this.res);
