@@ -55,8 +55,7 @@ module.exports = {
                 let tables = await sails.sendNativeQuery(`
                     SELECT t.id,
                         t.name,
-                        t.table_no,
-                        'Table - ' || t.table_no as "table_no",
+                        'Table ' || t.table_no as "table_no",
                         COALESCE((
                             WITH TableCapacityCTE AS (
                                 SELECT te.capacity
