@@ -18,7 +18,6 @@ module.exports = {
             originDate = currentDate;
             date = await sails.helpers.convertDateWithTime(new Date());
         }
-        sails.log(date);
         let layouts = await sails.sendNativeQuery(`
             SELECT tb.id, tb.name, tb.level, $3 || tb.image as "image"
             FROM table_blueprints tb
@@ -34,7 +33,7 @@ module.exports = {
                 FROM stores s
                 LEFT JOIN events e ON s.id = e.store_id AND 
                     (
-                        ($2 BETWEEN e.start_date AND e.end_date) OR 
+                        ($2 BETWEEN e.start_date AND e.end_date) AND 
                         date($2) = date(e.start_date)
                     ) AND 
                     e.status = $3
@@ -67,14 +66,14 @@ module.exports = {
                                     FROM events
                                     WHERE status = $2 and 
                                     (
-                                        ($3 BETWEEN start_date AND end_date) OR 
+                                        ($3 BETWEEN start_date AND end_date) AND 
                                         date($3) = date(start_date)
                                     )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
+                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
                                 ORDER BY te.capacity DESC
                                 LIMIT 1
                             )
@@ -91,14 +90,14 @@ module.exports = {
                                     FROM events
                                     WHERE status = $2 and 
                                     (
-                                        ($3 BETWEEN start_date AND end_date) OR 
+                                        ($3 BETWEEN start_date AND end_date) AND 
                                         date($3) = date(start_date)
                                     )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
+                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
                                 ORDER BY te.down_payment DESC
                                 LIMIT 1
                             )
@@ -115,14 +114,14 @@ module.exports = {
                                     FROM events
                                     WHERE status = $2 and 
                                     (
-                                        ($3 BETWEEN start_date AND end_date) OR 
+                                        ($3 BETWEEN start_date AND end_date) AND 
                                         date($3) = date(start_date)
                                     )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
+                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
                                 ORDER BY te.minimum_spend DESC
                                 LIMIT 1
                             )
@@ -148,13 +147,13 @@ module.exports = {
                                             FROM events
                                             WHERE status = $2 and 
                                             (
-                                                ($3 BETWEEN start_date AND end_date) OR 
+                                                ($3 BETWEEN start_date AND end_date) AND 
                                                 date($3) = date(start_date)
                                             )
                                         ) as max_event_date ON e.start_date = max_event_date.max_date
                                         WHERE te.table_id = t.id AND 
                                             e.status = $2 AND 
-                                            ($3 BETWEEN e.start_date AND e.end_date OR date($3) = date(e.start_date))
+                                            ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
                                         ORDER BY te.status DESC
                                         LIMIT 1
                                     )
