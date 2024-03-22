@@ -18,6 +18,7 @@ module.exports = {
             originDate = currentDate;
             date = await sails.helpers.convertDateWithTime(new Date());
         }
+        sails.log(date);
         let layouts = await sails.sendNativeQuery(`
             SELECT tb.id, tb.name, tb.level, $3 || tb.image as "image"
             FROM table_blueprints tb
@@ -133,7 +134,7 @@ module.exports = {
                                 SELECT b.id
                                 FROM bookings b
                                 JOIN booking_details bd ON b.id = bd.booking_id AND t.id = bd.table_id
-                                WHERE b.status_order IN (SELECT so.id FROM status_orders so WHERE lower(so.name) IN ('pending payment', 'success')) AND b.reservation_date = $3
+                                WHERE b.status_order IN (SELECT so.id FROM status_orders so WHERE lower(so.name) IN ('pending payment', 'success')) AND b.reservation_date = date($3)
                             ) IS NOT NULL
                             THEN 0
                             ELSE 
