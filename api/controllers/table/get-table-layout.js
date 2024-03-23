@@ -32,10 +32,7 @@ module.exports = {
                     $4 || s.image as "store_image"
                 FROM stores s
                 LEFT JOIN events e ON s.id = e.store_id AND 
-                    (
-                        ($2 BETWEEN e.start_date AND e.end_date) AND 
-                        date($2) = date(e.start_date)
-                    ) AND 
+                    date($2) = date(e.start_date) AND 
                     e.status = $3
                 WHERE s.id = $1
                 GROUP BY s.id, s.name
@@ -64,16 +61,13 @@ module.exports = {
                                 JOIN (
                                     SELECT MAX(start_date) as max_date
                                     FROM events
-                                    WHERE status = $2 and 
-                                    (
-                                        ($3 BETWEEN start_date AND end_date) AND 
+                                    WHERE status = $2 AND 
                                         date($3) = date(start_date)
-                                    )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
+                                    date($3) = date(e.start_date)
                                 ORDER BY te.capacity DESC
                                 LIMIT 1
                             )
@@ -89,15 +83,12 @@ module.exports = {
                                     SELECT MAX(start_date) as max_date
                                     FROM events
                                     WHERE status = $2 and 
-                                    (
-                                        ($3 BETWEEN start_date AND end_date) AND 
                                         date($3) = date(start_date)
-                                    )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
+                                    date($3) = date(e.start_date)
                                 ORDER BY te.down_payment DESC
                                 LIMIT 1
                             )
@@ -112,16 +103,13 @@ module.exports = {
                                 JOIN (
                                     SELECT MAX(start_date) as max_date
                                     FROM events
-                                    WHERE status = $2 and 
-                                    (
-                                        ($3 BETWEEN start_date AND end_date) AND 
+                                    WHERE status = $2 AND 
                                         date($3) = date(start_date)
-                                    )
                                 ) as max_event_date ON e.start_date = max_event_date.max_date
                                 WHERE te.table_id = t.id AND 
                                     e.status = $2 AND 
                                     te.status = $2 AND 
-                                    ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
+                                    date($3) = date(e.start_date)
                                 ORDER BY te.minimum_spend DESC
                                 LIMIT 1
                             )
@@ -145,15 +133,12 @@ module.exports = {
                                         JOIN (
                                             SELECT MAX(start_date) as max_date
                                             FROM events
-                                            WHERE status = $2 and 
-                                            (
-                                                ($3 BETWEEN start_date AND end_date) AND 
+                                            WHERE status = $2 AND 
                                                 date($3) = date(start_date)
-                                            )
                                         ) as max_event_date ON e.start_date = max_event_date.max_date
                                         WHERE te.table_id = t.id AND 
                                             e.status = $2 AND 
-                                            ($3 BETWEEN e.start_date AND e.end_date AND date($3) = date(e.start_date))
+                                            date($3) = date(e.start_date)
                                         ORDER BY te.status DESC
                                         LIMIT 1
                                     )
