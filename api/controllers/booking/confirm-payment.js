@@ -177,12 +177,13 @@ module.exports = {
                 var calcPoint = Math.floor(subtotal / memberConfigPoint.rows[0].value);
                 // check user memberships data
                 let userMemberships = await sails.sendNativeQuery(`
-                    SELECT um.total_spent
+                    SELECT um.total_spent, um.points
                     FROM user_memberships um
                     WHERE um.member_id = $1
                 `, [memberId]);
 
                 var totalSpent = 0;
+                var currPoint = 0;
                 if (userMemberships.rows.length <= 0) {
                     // if memberships not exist, create new one
                     await sails.sendNativeQuery(`
@@ -194,6 +195,7 @@ module.exports = {
                     `, [memberId, 1, 0, 0, 1, memberId, new Date()]);
                 } else {
                     totalSpent = userMemberships.rows[0].total_spent;
+                    currPoint = userMemberships.rows[0].points + calcPoint;
                 }
 
                 // check membership tier eligible update
@@ -221,6 +223,20 @@ module.exports = {
                         updated_at = $3
                     WHERE member_id = $4
                 `, [calcPoint, subtotal, new Date(), memberId]);
+
+                // record point history
+                await sails.sendNativeQuery(`
+                    INSERT INTO point_history_logs (member_id, title, type, amount, latest_point, created_by, updated_by, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $7)
+                `, [
+                    memberId, 
+                    'Adjustment on Mobile Apps\n<b>Rp. ' + await sails.helpers.numberFormat(subtotal) + '</b>',
+                    'increment',
+                    calcPoint,
+                    currPoint,
+                    memberId,
+                    new Date()
+                ]);
             }
 
             // update booking status to success

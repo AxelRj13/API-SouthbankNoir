@@ -62,6 +62,20 @@ module.exports = {
                 WHERE member_id = $2 AND status = $3
             `, [coupon.rows[0].price, memberId, 1]);
 
+            // record point history
+            await sails.sendNativeQuery(`
+                INSERT INTO point_history_logs (member_id, title, type, amount, latest_point, created_by, updated_by, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $7)
+            `, [
+                memberId, 
+                'Buy Coupon',
+                'decrement',
+                coupon.rows[0].price,
+                point - coupon.rows[0].price,
+                memberId,
+                new Date()
+            ]);
+
             return sails.helpers.convertResult(1, 'Coupon successfully purchased.', null, this.res);
         } else {
             return sails.helpers.convertResult(0, 'Coupon purchase failed, please try again.', null, this.res);
