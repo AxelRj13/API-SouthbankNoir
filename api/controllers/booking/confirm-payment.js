@@ -230,7 +230,7 @@ module.exports = {
                     VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $7)
                 `, [
                     memberId, 
-                    'Adjustment on Mobile Apps\n<b>Rp. ' + await sails.helpers.numberFormat(subtotal) + '</b>',
+                    'Adjustment on Mobile Apps<br><b>Rp. ' + await sails.helpers.numberFormat(subtotal) + '</b>',
                     'increment',
                     calcPoint,
                     currPoint,
