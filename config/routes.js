@@ -61,6 +61,7 @@ module.exports.routes = {
 
   // Profile
   'POST /api/v1/profile/update': { action: 'profile/update-profile' },
+  'POST /api/v1/profile/point-history': { action: 'profile/point-history' },
 
   // Coupon
   'POST /api/v1/coupon/get': { action: 'coupon/get-active-coupons' },
