@@ -226,14 +226,15 @@ module.exports = {
 
                 // record point history
                 await sails.sendNativeQuery(`
-                    INSERT INTO point_history_logs (member_id, title, type, amount, latest_point, created_by, updated_by, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $7)
+                    INSERT INTO point_history_logs (member_id, title, type, amount, latest_point, nominal, created_by, updated_by, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $8)
                 `, [
                     memberId, 
                     'Adjustment on Mobile Apps<br><b>Rp. ' + await sails.helpers.numberFormat(subtotal) + '</b>',
                     'increment',
                     calcPoint,
                     currPoint,
+                    subtotal,
                     memberId,
                     new Date()
                 ]);
