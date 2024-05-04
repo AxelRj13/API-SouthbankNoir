@@ -11,7 +11,7 @@
 module.exports.policies = {
 
   '*': ['isAuthorized'],
-
   // Bypass the `isAuthorized` policy for:
+  'xendit/*': true,
   'auth/*': true
 };
