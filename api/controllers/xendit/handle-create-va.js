@@ -33,8 +33,12 @@ module.exports = {
             type: 'string',
             required: true
         },
+        expected_amount: {
+            type: 'number',
+            required: true
+        }
     },
-    fn: async function ({id, external_id, name, account_number, bank_code, merchant_code, expiration_date, status}) {
+    fn: async function ({id, external_id, name, account_number, bank_code, merchant_code, expiration_date, status, expected_amount}) {
         let currentDate = new Date();
         let vaResponses = await sails.sendNativeQuery(`
             SELECT x.id
@@ -47,12 +51,12 @@ module.exports = {
             await sails.sendNativeQuery(`
                 INSERT INTO xendit_va_responses (
                     id, external_id, account_name, account_number,
-                    bank_code, merchant_code, expiration_date, status,
+                    bank_code, merchant_code, expiration_date, amount, status,
                     created_by, updated_by, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
             `, [
                 id, external_id, name, account_number, 
-                bank_code, merchant_code, expiration_date, status,
+                bank_code, merchant_code, expiration_date, expected_amount, status,
                 1, currentDate
             ]);
             return sails.helpers.convertResult(1, 'VA is successfully created!', null, this.res);
