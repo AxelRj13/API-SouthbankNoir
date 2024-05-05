@@ -13,6 +13,10 @@ module.exports = {
             type: 'string',
             required: false
         },
+        merchant_code: {
+            type: 'string',
+            required: true
+        },
         account_number: {
             type: 'string',
             required: true
@@ -26,13 +30,14 @@ module.exports = {
             required: true
         },
     },
-    fn: async function ({id, external_id, payment_id, account_number, transaction_timestamp, amount}) {
+    fn: async function ({id, external_id, payment_id, merchant_code, account_number, transaction_timestamp, amount}) {
         let currentDate = new Date();
+        let vaNumber = merchant_code + account_number;
         let vaResponses = await sails.sendNativeQuery(`
             SELECT x.id
             FROM xendit_va_responses x
             WHERE x.id = $1 AND external_id = $2 AND account_number = $3
-        `, [id, external_id, account_number]);
+        `, [id, external_id, vaNumber]);
         if (vaResponses.rows.length > 0) {
             await sails.sendNativeQuery(`
                 UPDATE xendit_va_responses
@@ -44,11 +49,11 @@ module.exports = {
                 WHERE id = $1 AND 
                     external_id = $2 AND 
                     account_number = $3
-            `, [id, external_id, account_number, payment_id, amount, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
+            `, [id, external_id, vaNumber, payment_id, amount, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
 
             return sails.helpers.convertResult(1, 'VA is successfully paid!', null, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'VA is not paid yet', null, this.res);
+            return sails.helpers.convertResult(0, 'VA number is not exist, please try create again.', null, this.res);
         }
     }
   };
