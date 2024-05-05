@@ -29,12 +29,8 @@ module.exports = {
             type: 'string',
             required: true
         },
-        amount: {
-            type: 'number',
-            required: true
-        },
     },
-    fn: async function ({id, external_id, payment_id, bank_code, merchant_code, account_number, transaction_timestamp, amount}) {
+    fn: async function ({id, external_id, payment_id, bank_code, merchant_code, account_number, transaction_timestamp}) {
         let currentDate = new Date();
         let vaNumber = merchant_code + account_number;
         let vaResponses = await sails.sendNativeQuery(`
@@ -46,14 +42,13 @@ module.exports = {
             await sails.sendNativeQuery(`
                 UPDATE xendit_va_responses
                 SET payment_id = $4,
-                    amount = $5, 
-                    transaction_date = $6,
-                    status = $7,
-                    updated_at = $8
+                    transaction_date = $5,
+                    status = $6,
+                    updated_at = $7
                 WHERE external_id = $1 AND 
                     account_number = $2 AND 
                     bank_code = $3
-            `, [external_id, vaNumber, bank_code, payment_id, amount, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
+            `, [external_id, vaNumber, bank_code, payment_id, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
 
             return sails.helpers.convertResult(1, 'VA is successfully paid!', null, this.res);
         } else {
