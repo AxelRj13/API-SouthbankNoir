@@ -1,5 +1,5 @@
 module.exports = {
-    friendlyName: 'Handle callback event from xendit after VA is paid',
+    friendlyName: 'Handle callback event from xendit when VA is paid',
     inputs: {
         id: {
           type: 'string',
@@ -17,14 +17,6 @@ module.exports = {
             type: 'string',
             required: true
         },
-        bank_code: {
-            type: 'string',
-            required: true
-        },
-        merchant_code: {
-            type: 'string',
-            required: true
-        },
         transaction_timestamp: {
             type: 'string',
             required: true
@@ -34,19 +26,29 @@ module.exports = {
             required: true
         },
     },
-    fn: async function ({id, external_id, payment_id, account_number, bank_code, merchant_code, transaction_timestamp, amount}) {
+    fn: async function ({id, external_id, payment_id, account_number, transaction_timestamp, amount}) {
         let currentDate = new Date();
-        await sails.sendNativeQuery(`
-            INSERT INTO xendit_va_responses (
-                id, external_id, payment_id, account_name, account_number,
-                bank_code, merchant_code, transaction_date, status, amount,
-                created_by, updated_by, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, $12)
-        `, [
-            id, external_id, payment_id, 'test_callback', account_number, 
-            bank_code, merchant_code, transaction_timestamp, 'PAID', amount, 
-            1, currentDate
-        ]);
-        return sails.helpers.convertResult(1, 'OK', {}, this.res);
+        let vaResponses = await sails.sendNativeQuery(`
+            SELECT x.id
+            FROM xendit_va_responses x
+            WHERE x.id = $1 AND external_id = $2 AND account_number = $3
+        `, [id, external_id, account_number]);
+        if (vaResponses.rows.length > 0) {
+            await sails.sendNativeQuery(`
+                UPDATE xendit_va_responses
+                SET payment_id = $4,
+                    amount = $5, 
+                    transaction_date = $6,
+                    status = $7,
+                    updated_at = $8
+                WHERE id = $1 AND 
+                    external_id = $2 AND 
+                    account_number = $3
+            `, [id, external_id, account_number, payment_id, amount, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
+
+            return sails.helpers.convertResult(1, 'VA is successfully paid!', {}, this.res);
+        } else {
+            return sails.helpers.convertResult(0, 'VA is not paid yet', {}, this.res);
+        }
     }
   };
