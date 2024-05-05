@@ -55,7 +55,7 @@ module.exports = {
                 bank_code, merchant_code, expiration_date, status,
                 1, currentDate
             ]);
-            return sails.helpers.convertResult(1, 'VA is successfully created!', {}, this.res);
+            return sails.helpers.convertResult(1, 'VA is successfully created!', null, this.res);
         }
     }
   };

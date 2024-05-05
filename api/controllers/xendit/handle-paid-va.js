@@ -46,9 +46,9 @@ module.exports = {
                     account_number = $3
             `, [id, external_id, account_number, payment_id, amount, await sails.helpers.convertDateWithTime(transaction_timestamp), 'PAID', currentDate]);
 
-            return sails.helpers.convertResult(1, 'VA is successfully paid!', {}, this.res);
+            return sails.helpers.convertResult(1, 'VA is successfully paid!', null, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'VA is not paid yet', {}, this.res);
+            return sails.helpers.convertResult(0, 'VA is not paid yet', null, this.res);
         }
     }
   };
