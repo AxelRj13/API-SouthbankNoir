@@ -40,8 +40,8 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   paymentAPIURL: 'https://api.sandbox.midtrans.com/v2/',
   paymentRedirectURL: 'https://app.sandbox.midtrans.com/snap/v3/redirection/',
   creditCardRedirectUrl: 'https://api.sandbox.midtrans.com/v2/3ds/redirect/',
-  serverKey: 'SB-Mid-server-BaTQ6xxHAHZPOe0LF6-mukEb',
-  clientKey: 'SB-Mid-client-HcQTASGdK78b2lLr',
+  publicKey: 'xnd_public_development_0dc9V8Wi5Rlo_82S9__Ovnb2NmEzqnhwtdGysbs7BIzWGX5fyY2HmcQmtDuWZ8K',
+  privateKey: 'xnd_development_qGi9hx2RoYSjwIAmlFx7bmHso34DSOrQKGs57bM6zlZtJ9gp7ET3Qrx3b2oAza',
   isProd: false,
   orderTag: '-staging',
   paymentExpiry: 5 //minutes

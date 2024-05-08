@@ -1,5 +1,4 @@
 module.exports = {
-
     friendlyName: 'Create booking',
     inputs: {
         payload: {
@@ -7,7 +6,6 @@ module.exports = {
           required: true
         }
     },
-  
     fn: async function ({payload}) {
         let memberId = this.req.headers['member-id'];
         let userLoginName = this.req.headers['user-login-name'];
@@ -206,43 +204,33 @@ module.exports = {
             }
 
             // connect to payment gateway
-            const midtransClient = require('midtrans-client');
-            let core = new midtransClient.CoreApi({
-                isProduction : sails.config.isProd,
-                serverKey : sails.config.serverKey,
-                clientKey : sails.config.clientKey
+            const xenditNode = require('xendit-node');
+            let xenditClient = new xenditNode.Xendit({
+                secretKey: sails.config.privateKey
             });
+            const paymentRequestClient = xenditClient.PaymentRequest;
 
+            let expiryTimeSetting = new Date(currentDate.getTime() + (sails.config.paymentExpiry * 60 * 1000));
             var isError = false;
             var errorMsg;
-            // build payload for midtrans
-            var midtransPayload = {
-                transaction_details: {
-                    order_id: orderNumber + sails.config.orderTag,
-                    gross_amount: subtotal - discount
-                },
-                item_details: itemDetailsPayload,
-                customer_details: {
-                    first_name: member.rows[0].first_name,
-                    last_name: member.rows[0].last_name,
-                    email: member.rows[0].email,
-                    phone: member.rows[0].phone
-                },
-                payment_type: paymentMethod.rows[0].payment_type,
-                custom_expiry: {
-                    expiry_duration: sails.config.paymentExpiry,
-                    unit: "minute"
-                }
+            let data = {
+                "country" : "ID",
+                "amount" : subtotal - discount,
+                "currency" : "IDR",
+                "referenceId" : orderNumber + sails.config.orderTag
             };
             
             if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
-                midtransPayload.bank_transfer = {
-                    bank: paymentMethod.rows[0].bank_transfer_name
-                };
-            } else if (paymentMethod.rows[0].payment_type == 'echannel') {
-                midtransPayload.echannel = {
-                    bill_info1 : "Payment:",
-                    bill_info2 : "Online purchase"
+                data.paymentMethod = {
+                    "reusability" : "ONE_TIME_USE",
+                    "type" : "VIRTUAL_ACCOUNT",
+                    "virtualAccount" : {
+                        "channelCode": paymentMethod.rows[0].bank_transfer_name,
+                        "channelProperties" : {
+                            "customerName" : "Southbank Noir",
+                            "expiresAt" : expiryTimeSetting
+                        }
+                    }
                 };
             } else if (paymentMethod.rows[0].payment_type == 'gopay') {
                 midtransPayload.gopay = {
@@ -293,41 +281,52 @@ module.exports = {
                 }
             }
 
-            // charge midtrans transaction
+            // call xendit API to create payment request
             let paymentResult;
-            await core.charge(JSON.stringify({...midtransPayload})).then((chargeResponse) => {
-                if (chargeResponse.status_code !== '201') {
-                    errorMsg = 'Payment Transaction error due to: ' + chargeResponse.status_message;
-                    isError = true;
+            await paymentRequestClient.createPaymentRequest({data}).then((response) => {
+                if (response.status == 'PENDING') {
+                    paymentResult = response;
                 } else {
-                    paymentResult = chargeResponse;
+                    sails.log(response);
+                    isError = true;
                 }
             })
             .catch((err) => {
+                sails.log(err);
                 errorMsg = err.message;
-                if (err.ApiResponse) {
-                    errorMsg = err.ApiResponse.status_message;
-                }
                 console.error('Error: ' + errorMsg);
                 isError = true;
             });
             
+            // if error, stop process and return error response
             if (isError) {
                 return sails.helpers.convertResult(0, errorMsg, null, this.res);
             }
 
+            // after payment is created, save record to DB
             var deeplinkRedirect = null;
-            if (paymentResult.actions) {
-                deeplinkRedirect = paymentResult.actions.filter((action) => action.name == 'deeplink-redirect')[0].url;
-            } else if (paymentResult.redirect_url) {
-                deeplinkRedirect = paymentResult.redirect_url;
-            }
+            // if (paymentResult.actions) {
+            //     deeplinkRedirect = paymentResult.actions.filter((action) => action.name == 'deeplink-redirect')[0].url;
+            // } else if (paymentResult.redirect_url) {
+            //     deeplinkRedirect = paymentResult.redirect_url;
+            // }
 
-            var expiryTime = null;
-            if (paymentResult.expiry_time) {
-                expiryTime = paymentResult.expiry_time;
+            var expiryTime = expiryTimeSetting;
+            if (paymentResult.paymentMethod.type == 'VIRTUAL_ACCOUNT') {
+                let vaObject = paymentResult.paymentMethod.virtualAccount;
+                expiryTime = await sails.helpers.convertDateWithTime(vaObject.channelProperties.expiresAt);
+                // save xendit responses
+                await sails.sendNativeQuery(`
+                    INSERT INTO xendit_payment_responses (
+                        id, reference_id, type, channel_code, account_number, 
+                        amount, expiration_date, status, created_by, updated_by, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
+                `, [
+                    paymentResult.id, paymentResult.referenceId, paymentResult.paymentMethod.type, vaObject.channelCode, vaObject.channelProperties.virtualAccountNumber, 
+                    vaObject.amount, expiryTime, paymentResult.status, memberId, currentDate
+                ]).usingConnection(db);
             }
-
+            
             // create booking data
             let booking = await sails.sendNativeQuery(`
                 INSERT INTO bookings (
@@ -339,7 +338,7 @@ module.exports = {
             `, [
                 storeId, memberId, paymentMethodId, pendingPaymentStatusId.rows[0].id, orderNumber, reservationDate,
                 cpName, cpPhone, (notes ? notes : null), subtotal, (discount > 0 ? discount : null), (promoCode && discount > 0 ? promoCode : null),
-                paymentResult.transaction_id, deeplinkRedirect, expiryTime, memberId, currentDate
+                paymentResult.id, deeplinkRedirect, expiryTime, memberId, currentDate
             ]).usingConnection(db);
 
             let newBookingId = booking.rows[0].id;
