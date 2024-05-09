@@ -232,14 +232,16 @@ module.exports = {
                         }
                     }
                 };
-            } else if (paymentMethod.rows[0].payment_type == 'gopay') {
-                midtransPayload.gopay = {
-                    enable_callback: true,
-                    callback_url: "someapps://callback"
-                };
-            } else if (paymentMethod.rows[0].payment_type == 'shopeepay') {
-                midtransPayload.shopeepay = {
-                    callback_url: "someapps://callback"
+            } else if (paymentMethod.rows[0].payment_type == 'ewallet') {
+                data.paymentMethod = {
+                    "reusability": "ONE_TIME_USE",
+                    "type": "EWALLET",
+                    "ewallet": {
+                        "channelCode": paymentMethod.rows[0].bank_transfer_name,
+                        "channelProperties": {
+                            "successReturnUrl": "https://redirect.me/goodstuff"
+                        }
+                    }
                 }
             } else if (paymentMethod.rows[0].payment_type == 'credit_card') {
                 // authenticate credit card
@@ -283,9 +285,17 @@ module.exports = {
 
             // call xendit API to create payment request
             let paymentResult;
+            let deeplinkRedirect;
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
-                if (response.status == 'PENDING') {
+                if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
                     paymentResult = response;
+                    
+                    // for cc and ewallet
+                    if (response.status == 'REQUIRES_ACTION') {
+                        if (response.actions) {
+                            deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
+                        }
+                    }
                 } else {
                     sails.log(response);
                     isError = true;
@@ -304,26 +314,31 @@ module.exports = {
             }
 
             // after payment is created, save record to DB
-            var deeplinkRedirect = null;
-            // if (paymentResult.actions) {
-            //     deeplinkRedirect = paymentResult.actions.filter((action) => action.name == 'deeplink-redirect')[0].url;
-            // } else if (paymentResult.redirect_url) {
-            //     deeplinkRedirect = paymentResult.redirect_url;
-            // }
-
             var expiryTime = expiryTimeSetting;
-            if (paymentResult.paymentMethod.type == 'VIRTUAL_ACCOUNT') {
-                let vaObject = paymentResult.paymentMethod.virtualAccount;
+            let paymentMethodObj = paymentResult.paymentMethod;
+            if (paymentMethodObj.type == 'VIRTUAL_ACCOUNT') {
+                let vaObject = paymentMethodObj.virtualAccount;
                 expiryTime = await sails.helpers.convertDateWithTime(vaObject.channelProperties.expiresAt);
                 // save xendit responses
                 await sails.sendNativeQuery(`
                     INSERT INTO xendit_payment_responses (
-                        id, reference_id, type, channel_code, account_number, 
+                        id, reference_id, payment_method_id, type, channel_code, account_number, 
                         amount, expiration_date, status, created_by, updated_by, created_at, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $10)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
                 `, [
-                    paymentResult.id, paymentResult.referenceId, paymentResult.paymentMethod.type, vaObject.channelCode, vaObject.channelProperties.virtualAccountNumber, 
+                    paymentResult.id, paymentResult.referenceId, paymentMethodObj.id, paymentMethodObj.type, vaObject.channelCode, vaObject.channelProperties.virtualAccountNumber, 
                     vaObject.amount, expiryTime, paymentResult.status, memberId, currentDate
+                ]).usingConnection(db);
+            } else if (paymentMethodObj.type == 'EWALLET') {
+                let ewObject = paymentMethodObj.ewallet;
+                await sails.sendNativeQuery(`
+                    INSERT INTO xendit_payment_responses (
+                        id, reference_id, payment_method_id, type, channel_code, url, 
+                        amount, expiration_date, status, created_by, updated_by, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
+                `, [
+                    paymentResult.id, paymentResult.referenceId, paymentMethodObj.id, paymentMethodObj.type, ewObject.channelCode, deeplinkRedirect, 
+                    paymentResult.amount, expiryTime, paymentMethodObj.status, memberId, currentDate
                 ]).usingConnection(db);
             }
             
