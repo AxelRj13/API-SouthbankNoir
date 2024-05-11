@@ -84,6 +84,5 @@ module.exports.routes = {
   'POST /api/v1/payment-method/get': { action: 'paymentmethod/get-payment-method' },
 
   // XENDIT
-  'POST /api/v1/xendit/callback/handle-create-va': { action: 'xendit/handle-create-va' },
-  'POST /api/v1/xendit/callback/handle-paid-va': { action: 'xendit/handle-paid-va' },
+  'POST /api/v1/xendit/callback/paid-event-handler': { action: 'xendit/paid-event-handler' },
 };
