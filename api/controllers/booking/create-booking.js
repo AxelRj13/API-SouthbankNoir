@@ -213,7 +213,7 @@ module.exports = {
             let expiryTimeSetting = new Date(currentDate.getTime() + (sails.config.paymentExpiry * 60 * 1000));
             var isError = false;
             var errorMsg;
-            let data = {
+            var data = {
                 "country" : "ID",
                 "amount" : subtotal - discount,
                 "currency" : "IDR",
@@ -245,36 +245,49 @@ module.exports = {
                 }
             } else if (paymentMethod.rows[0].payment_type == 'credit_card') {
                 // authenticate credit card
+                const paymentMethodClient = xenditClient.PaymentMethod;
                 if (payload.card_number && payload.card_exp_month && payload.card_exp_year && payload.card_cvv) {
-                    const fetch = require('node-fetch');
-                    const options = {
-                        method: 'GET',
-                        headers: {
-                            accept: 'application/json',
-                            'content-type': 'application/json',
-                            authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
+                    data = {
+                        "type": "CARD",
+                        "reusability": "ONE_TIME_USE",
+                        "card": {
+                            "currency": "IDR",
+                            "channelProperties": {
+                                "successReturnUrl": "https://redirect.me/goodstuff",
+                                "failureReturnUrl": "https://redirect.me/badstuff"
+                            },
+                            "cardInformation": {
+                                "cardNumber": payload.card_number,
+                                "expiryMonth": payload.card_exp_month,
+                                "expiryYear": payload.card_exp_year,
+                                "cvv": payload.card_cvv
+                            }
                         }
                     };
 
-                    await fetch(sails.config.paymentAPIURL + 'token?client_key=' + sails.config.clientKey + '&card_number=' + payload.card_number + '&card_exp_month=' + payload.card_exp_month + '&card_exp_year=' + payload.card_exp_year + '&card_cvv=' + payload.card_cvv, options)
-                        .then(res => res.json())
-                        .then(json => {
-                            if (json.status_code == '200') {
-                                midtransPayload.credit_card = {
-                                    token_id: json.token_id,
-                                    authentication: true
-                                };
-                            } else {
-                                isError = true;
-                                errorMsg = json.status_message;
-                            }
-                        })
-                        .catch(err => {
-                            sails.log('error: ' + err);
-                            errorMsg = err.toString();
+                    // tokenized cc information
+                    await paymentMethodClient.createPaymentMethod({data}).then((response) => {
+                        if (response.error_code) {
+                            sails.log("ERROR: " + response.message);
                             isError = true;
-                        });
-                    
+                        } else {
+                            if (response.status == 'PENDING') {
+                                // build payload for payment request
+                                data = {
+                                    "amount": subtotal - discount,
+                                    "currency": "IDR",
+                                    "paymentMethodId": response.id,
+                                    "referenceId" : orderNumber + sails.config.orderTag
+                                };
+                            }
+                        }
+                    }).catch((err) => {
+                        errorMsg = err.errorCode + ' - ' + err.message;
+                        sails.log(errorMsg);
+                        isError = true;
+                    });
+
+                    // if error, stop process and return error response
                     if (isError) {
                         return sails.helpers.convertResult(0, errorMsg, null, this.res);
                     }
@@ -289,7 +302,6 @@ module.exports = {
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
                 if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
                     paymentResult = response;
-                    
                     // for cc and ewallet
                     if (response.status == 'REQUIRES_ACTION') {
                         if (response.actions) {
@@ -300,11 +312,9 @@ module.exports = {
                     sails.log(response);
                     isError = true;
                 }
-            })
-            .catch((err) => {
-                sails.log(err);
-                errorMsg = err.message;
-                console.error('Error: ' + errorMsg);
+            }).catch((err) => {
+                errorMsg = err.errorCode + ' - ' + err.message;
+                sails.log(errorMsg);
                 isError = true;
             });
             
@@ -338,6 +348,19 @@ module.exports = {
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
                 `, [
                     paymentResult.id, paymentResult.referenceId, paymentMethodObj.id, paymentMethodObj.type, ewObject.channelCode, deeplinkRedirect, 
+                    paymentResult.amount, expiryTime, paymentMethodObj.status, memberId, currentDate
+                ]).usingConnection(db);
+            } else if (paymentMethodObj.type == 'CARD') {
+                let cardObject = paymentMethodObj.card;
+                let cardInfo = cardObject.cardInformation;
+                let cardChannelCode = cardInfo.issuer + ' ' + cardInfo.network + ' (' + cardInfo.type + ')';
+                await sails.sendNativeQuery(`
+                    INSERT INTO xendit_payment_responses (
+                        id, reference_id, payment_method_id, type, channel_code, url, 
+                        amount, expiration_date, status, created_by, updated_by, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $11)
+                `, [
+                    paymentResult.id, paymentResult.referenceId, paymentMethodObj.id, paymentMethodObj.type, cardChannelCode, deeplinkRedirect, 
                     paymentResult.amount, expiryTime, paymentMethodObj.status, memberId, currentDate
                 ]).usingConnection(db);
             }
