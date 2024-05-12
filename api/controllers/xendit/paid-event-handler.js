@@ -17,7 +17,7 @@ module.exports = {
             let paymentResponses = await sails.sendNativeQuery(`
                 SELECT b.order_no
                 FROM bookings b
-                JOIN xendit_payment_responses x ON x.id = b.midtrans_trx.id
+                JOIN xendit_payment_responses x ON x.id = b.midtrans_trx_id
                 JOIN status_orders st ON b.status_order = st.id
                 WHERE x.payment_method_id = $1 AND 
                     x.id = $2 AND 
@@ -42,7 +42,9 @@ module.exports = {
                     SET status_order = $2,
                         updated_at = $3
                     WHERE order_no = $1
-                `, [paymentResponses.rows[0].order_no, successStatusId, currentDate])
+                `, [paymentResponses.rows[0].order_no, successStatusId.rows[0].id, currentDate])
+
+                return sails.helpers.convertResult(1, 'Payment Request has been successfully paid', null, this.res);
             } else {
                 return sails.helpers.convertResult(0, 'Payment Request cannot be found', null, this.res);
             }
