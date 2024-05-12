@@ -1,5 +1,5 @@
 module.exports = {
-    friendlyName: 'Get list of tables and layout',
+    friendlyName: 'Get payment data of booking',
     inputs: {
         booking_id: {
           type: 'number',
@@ -12,8 +12,9 @@ module.exports = {
         let pendingPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
         let expiredPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['expired']);
         let bookings = await sails.sendNativeQuery(`
-            SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id, b.payment_method, b.deeplink_redirect, b.promo_code_applied, b.store_id
+            SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id as payment_request_id, b.payment_method, b.deeplink_redirect, b.promo_code_applied, b.store_id, x.account_number
             FROM bookings b
+            JOIN xendit_payment_responses x ON x.id = b.midtrans_trx_id
             WHERE b.id = $1 AND b.status_order = $2 AND b.member_id = $3
         `, [booking_id, pendingPaymentStatusId.rows[0].id, memberId]);
 
@@ -25,7 +26,7 @@ module.exports = {
                 headers: {
                     accept: 'application/json',
                     'content-type': 'application/json',
-                    authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
+                    authorization: 'Basic ' + Buffer.from(sails.config.privateKey + ":").toString("base64")
                 }
             };
             
@@ -45,35 +46,36 @@ module.exports = {
             var errorMsg;
             let vaNumber;
             let deeplinkRedirect;
-            await fetch(sails.config.paymentAPIURL + bookings.rows[0].order_no + sails.config.orderTag + '/status', options)
+            let paymentStatus;
+            await fetch(sails.config.paymentAPIURL + bookings.rows[0].payment_request_id, options)
                 .then(res => res.json())
                 .then(json => {
-                    sails.log(json)
-                    if (json.status_code == '201' || json.status_code == '200') {
+                    let paymentMethodObj = json.payment_method;
+                    if ((json.status == 'PENDING' || json.status == 'REQUIRES_ACTION') && paymentMethodObj.status == 'ACTIVE') {
                         if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
-                            vaNumber = json.va_numbers.filter((va) => va.bank == paymentMethod.rows[0].bank_transfer_name)[0].va_number;
-                        } else if (paymentMethod.rows[0].payment_type == 'echannel') {
-                            vaNumber = json.biller_code + " " + json.bill_key;
-                        } else if (paymentMethod.rows[0].payment_type == 'gopay' || paymentMethod.rows[0].payment_type == 'shopeepay' || paymentMethod.rows[0].payment_type == 'credit_card') {
+                            vaNumber = bookings.rows[0].account_number;
+                        } else if (paymentMethod.rows[0].payment_type == 'ewallet' || paymentMethod.rows[0].payment_type == 'credit_card') {
                             deeplinkRedirect = bookings.rows[0].deeplink_redirect;
                         }
-                        isPaid = json.status_code == '200' && (json.transaction_status == 'settlement' || json.transaction_status == 'capture') && json.order_id == bookings.rows[0].order_no + sails.config.orderTag;
-                    } else if (json.status_code == '407' || json.transaction_status == 'expire' || json.transaction_status == 'deny') {
+                    } else if (json.status == 'FAILED' && json.failure_code == 'PAYMENT_METHOD_EXPIRED' && paymentMethodObj.status == 'EXPIRED') {
                         isExpired = true;
                         errorMsg = "Transaction already expired, please create another.";
-                    } else {
+                        paymentStatus = paymentMethodObj.status;
+                    } else if (json.error_code) {
                         isError = true;
-                        errorMsg = json.status_message;
+                        errorMsg = json.error_code + ' - ' + json.message;
+                    } else {
+                        isPaid = json.status == 'SUCCEEDED' && paymentMethodObj.status == 'EXPIRED';
                     }
-                })
-                .catch(err => {
-                    console.error('error: ' + err);
-                    errorMsg = err.toString();
+                }).catch(err => {
                     isError = true;
+                    errorMsg = err.error_code + ' - ' + err.message;
                 });
 
             // set booking status to failed if payment is expired
             if (isExpired) {
+                let currentDate = new Date();
+                // update booking to expired
                 await sails.sendNativeQuery(`
                     UPDATE bookings
                     SET status_order = $1,
@@ -81,11 +83,18 @@ module.exports = {
                     WHERE id = $2
                 `, [expiredPaymentStatusId.rows[0].id, booking_id, new Date()]);
 
+                // update payment responses to expired
+                await sails.sendNativeQuery(`
+                    UPDATE xendit_payment_responses
+                    SET status = $2, 
+                        updated_at = $3
+                    WHERE id = $1
+                `, [bookings.rows[0].payment_request_id, paymentStatus, currentDate]);
+
                 // reset promo / coupon usage for this booking if expired
                 let promoCode = bookings.rows[0].promo_code_applied;
                 if (promoCode) {
                     let storeId = bookings.rows[0].store_id;
-                    let currentDate = new Date();
                     let promos = await sails.sendNativeQuery(`
                         SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                         FROM promos p
@@ -137,12 +146,16 @@ module.exports = {
                 result = {
                     redirect_url: deeplinkRedirect
                 };
+            } else if (isPaid) {
+                // if the payment has been paid
+                result = {
+                    redirect_url: null
+                };
             } else {
                 result = {
-                    redirect_url: (!isPaid) ? sails.config.paymentRedirectURL + bookings.rows[0].midtrans_trx_id : null,
                     order_id: bookings.rows[0].order_no,
                     subtotal: 'Rp. ' + await sails.helpers.numberFormat(bookings.rows[0].discount ? parseInt(bookings.rows[0].subtotal) - parseInt(bookings.rows[0].discount) : parseInt(bookings.rows[0].subtotal)),
-                    virtualAccountNumber: vaNumber
+                    virtualAccountNumber: (vaNumber) ? vaNumber : '-'
                 };
 
                 let paymentInstructions = await sails.sendNativeQuery(`
@@ -167,7 +180,7 @@ module.exports = {
 
             return sails.helpers.convertResult(1, '', result, this.res);
         } else {
-            return sails.helpers.convertResult(0, 'Sorry your booking has expired, please create again.', null, this.res);
+            return sails.helpers.convertResult(0, 'Your booking is not on pending payment state.', null, this.res);
         }
     }
   };

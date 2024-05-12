@@ -7,6 +7,7 @@ module.exports = {
         }
     },
     fn: async function ({booking_id}) {
+        let currentDate = new Date();
         let memberId = this.req.headers['member-id'];
         let member = await sails.sendNativeQuery(`SELECT id FROM members WHERE id = $1 AND status = $2`, [memberId, 1]);
         if (member.rows.length <= 0) {
@@ -44,7 +45,10 @@ module.exports = {
                 b.subtotal, 
                 b.discount,
                 b.promo_code_applied,
-                b.store_id
+                b.store_id,
+                x.id as payment_request_id,
+                x.status as xendit_status,
+                x.payment_id
             FROM bookings b
             JOIN TableCapacityCTE tc ON b.id = tc.booking_id
             JOIN status_orders so ON b.status_order = so.id
@@ -55,10 +59,11 @@ module.exports = {
                 e.store_id = s.id AND
                 e.status = $4 AND
                 (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
+            JOIN xendit_payment_responses x ON x.id = b.midtrans_trx_id
             WHERE b.id = $1 AND 
                 lower(so.name) = $2 AND 
                 b.member_id = $3
-            GROUP BY b.id, b.order_no, b.reservation_date, tc.minimum_spend, tc.total_table_capacity
+            GROUP BY b.id, b.order_no, b.reservation_date, tc.minimum_spend, tc.total_table_capacity, x.id
         `, [booking_id, 'pending payment', memberId, 1]);
 
         if (existingBookings.rows.length <= 0) {
@@ -72,7 +77,7 @@ module.exports = {
             headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
-                authorization: 'Basic ' + Buffer.from(sails.config.serverKey).toString("base64")
+                authorization: 'Basic ' + Buffer.from(sails.config.privateKey + ":").toString("base64")
             }
         };
         var isError = false;
@@ -80,26 +85,28 @@ module.exports = {
         var isPaid = false;
         var errorMsg;
         let receiptRefNo;
-        await fetch(sails.config.paymentAPIURL + existingBookings.rows[0].order_no + sails.config.orderTag + '/status', options)
+        let paymentStatus;
+        let transactionDate = currentDate;
+        await fetch(sails.config.paymentAPIURL + existingBookings.rows[0].payment_request_id, options)
             .then(res => res.json())
             .then(json => {
-                if (json.status_code == '201' || json.status_code == '200') {
-                    isPaid = (json.transaction_status == 'settlement' || json.transaction_status == 'capture') && json.order_id == existingBookings.rows[0].order_no + sails.config.orderTag;
-                    if (isPaid && json.payment_type == 'shopeepay') {
-                        receiptRefNo = json.shopeepay_reference_number;
-                    }
-                } else if (json.status_code == '407' || json.transaction_status == 'expire' || json.transaction_status == 'deny') {
+                let paymentMethodObj = json.payment_method;
+                if ((json.status == 'SUCCEEDED' && paymentMethodObj.status == 'EXPIRED') || existingBookings.rows[0].xendit_status == 'SUCCEEDED') {
+                    isPaid = true;
+                    receiptRefNo = existingBookings.rows[0].payment_id;
+                    paymentStatus = json.status;
+                    transactionDate = paymentMethodObj.updated;
+                } else if (json.status == 'FAILED' && json.failure_code == 'PAYMENT_METHOD_EXPIRED' && paymentMethodObj.status == 'EXPIRED') {
                     isExpired = true;
                     errorMsg = "Transaction already expired, please create another.";
-                } else {
+                    paymentStatus = paymentMethodObj.status;
+                } else if (json.error_code) {
                     isError = true;
-                    errorMsg = json.status_message;
+                    errorMsg = json.error_code + ' - ' + json.message;
                 }
-            })
-            .catch(err => {
-                console.error('error: ' + err);
-                errorMsg = err.toString();
+            }).catch(err => {
                 isError = true;
+                errorMsg = err.error_code + ' - ' + err.message;
             });
         
         // set booking status to failed if payment is expired
@@ -110,13 +117,20 @@ module.exports = {
                 SET status_order = $1,
                     updated_at = $3
                 WHERE id = $2
-            `, [expiredPaymentStatusId.rows[0].id, booking_id, new Date()]);
+            `, [expiredPaymentStatusId.rows[0].id, booking_id, currentDate]);
+
+            // update payment responses to expired
+            await sails.sendNativeQuery(`
+                UPDATE xendit_payment_responses
+                SET status = $2, 
+                    updated_at = $3
+                WHERE id = $1
+            `, [existingBookings.rows[0].payment_request_id, paymentStatus, currentDate]);
 
             // reset promo / coupon usage for this booking if expired
             let promoCode = existingBookings.rows[0].promo_code_applied;
             if (promoCode) {
                 let storeId = existingBookings.rows[0].store_id;
-                let currentDate = new Date();
                 let promos = await sails.sendNativeQuery(`
                     SELECT p.id, p.value, p.type, p.max_use_per_member, p.minimum_spend
                     FROM promos p
@@ -164,6 +178,7 @@ module.exports = {
             return sails.helpers.convertResult(0, errorMsg, null, this.res);
         }
 
+        // if the transaction has been successfully PAID
         if (isPaid) {
             // point setting
             var memberConfigPoint = await sails.sendNativeQuery(`
@@ -192,7 +207,7 @@ module.exports = {
                             created_by, updated_by, created_at, updated_at
                         ) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $7)
                         RETURNING id
-                    `, [memberId, 1, 0, 0, 1, memberId, new Date()]);
+                    `, [memberId, 1, 0, 0, 1, memberId, currentDate]);
                 } else {
                     totalSpent = userMemberships.rows[0].total_spent;
                     currPoint = userMemberships.rows[0].points + calcPoint;
@@ -222,7 +237,7 @@ module.exports = {
                         total_spent = total_spent + $2,
                         updated_at = $3
                     WHERE member_id = $4
-                `, [calcPoint, subtotal, new Date(), memberId]);
+                `, [calcPoint, subtotal, currentDate, memberId]);
 
                 // record point history
                 await sails.sendNativeQuery(`
@@ -236,7 +251,7 @@ module.exports = {
                     currPoint,
                     subtotal,
                     memberId,
-                    new Date()
+                    currentDate
                 ]);
             }
 
@@ -248,7 +263,18 @@ module.exports = {
                     receipt_ref_no = $2,
                     updated_at = $3
                 WHERE id = $4
-            `, [statusId.rows[0].id, (receiptRefNo) ? receiptRefNo : null, new Date(), booking_id]);
+            `, [statusId.rows[0].id, (receiptRefNo) ? receiptRefNo : null, currentDate, booking_id]);
+
+            // update payment responses if not updated yet
+            await sails.sendNativeQuery(`
+                UPDATE xendit_payment_responses
+                SET transaction_date = $4, 
+                    status = $5, 
+                    updated_at = $6
+                WHERE id = $1 AND 
+                    status IN ($2, $3) AND 
+                    payment_id IS NULL
+            `, [existingBookings.rows[0].payment_request_id, 'ACTIVE', 'PENDING', await sails.helpers.convertDateWithTime(transactionDate), paymentStatus, currentDate]);
 
             return sails.helpers.convertResult(1, 'Booking Successfully Paid', {
                 receipt_ref_number: (receiptRefNo) ? receiptRefNo : null,
