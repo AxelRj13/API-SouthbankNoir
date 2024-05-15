@@ -37,7 +37,6 @@ module.exports = Object.assign({}, PRODUCTION_CONFIG, {
   sailsImagePath: 'https://api.southbanknoir.com/images/',
   port: 8888,
   paymentAPIURL: 'https://api.xendit.co/payment_requests/',
-  paymentRedirectURL: 'https://app.sandbox.midtrans.com/snap/v3/redirection/',
   publicKey: 'xnd_public_development_0dc9V8Wi5Rlo_82S9__Ovnb2NmEzqnhwtdGysbs7BIzWGX5fyY2HmcQmtDuWZ8K',
   privateKey: 'xnd_development_qGi9hx2RoYSjwIAmlFx7bmHso34DSOrQKGs57bM6zlZtJ9gp7ET3Qrx3b2oAza',
   isProd: false,
