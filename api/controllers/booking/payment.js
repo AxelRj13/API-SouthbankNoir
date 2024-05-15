@@ -57,10 +57,10 @@ module.exports = {
                         } else if (paymentMethod.rows[0].payment_type == 'ewallet' || paymentMethod.rows[0].payment_type == 'credit_card') {
                             deeplinkRedirect = bookings.rows[0].deeplink_redirect;
                         }
-                    } else if (json.status == 'FAILED' && json.failure_code == 'PAYMENT_METHOD_EXPIRED' && paymentMethodObj.status == 'EXPIRED') {
+                    } else if (json.status == 'FAILED' || (json.failure_code == 'PAYMENT_METHOD_EXPIRED' && paymentMethodObj.status == 'EXPIRED')) {
                         isExpired = true;
                         errorMsg = "Transaction already expired, please create another.";
-                        paymentStatus = paymentMethodObj.status;
+                        paymentStatus = 'EXPIRED';
                     } else if (json.error_code) {
                         isError = true;
                         errorMsg = json.error_code + ' - ' + json.message;
