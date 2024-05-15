@@ -11,18 +11,18 @@ module.exports = {
       if (paymentMethods.rows.length > 0) {
         let bankTransfer = {
             category: "Bank Transfer (Virtual Account)",
-            methods: paymentMethods.rows.filter((x) => x.payment_type == 'bank_transfer' || x.payment_type == 'echannel')
+            methods: paymentMethods.rows.filter((x) => x.payment_type == 'bank_transfer')
         };
 
         let ewallet = {
             category: "E-Wallet",
-            methods: paymentMethods.rows.filter((x) => x.payment_type == 'gopay' || x.payment_type == 'shopeepay')
+            methods: paymentMethods.rows.filter((x) => x.payment_type == 'ewallet')
         };
 
         let creditCard = {
             category: "Credit Card",
             methods: paymentMethods.rows.filter((x) => x.payment_type == 'credit_card')
-        }
+        };
 
         result.push(bankTransfer);
         result.push(ewallet);
