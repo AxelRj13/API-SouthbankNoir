@@ -61,7 +61,7 @@ module.exports = {
                     e.store_id = s.id AND
                     e.status = $3 AND
                     (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
-                JOIN xendit_payment_responses x ON x.id = b.midtrans_trx_id
+                JOIN xendit_payment_responses x ON x.id = b.payment_request_id
                 WHERE 
                     b.order_no = $1 AND 
                     lower(so.name) = $2 AND 

@@ -12,9 +12,9 @@ module.exports = {
         let pendingPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['pending payment']);
         let expiredPaymentStatusId = await sails.sendNativeQuery(`SELECT id FROM status_orders WHERE lower(name) = $1`, ['expired']);
         let bookings = await sails.sendNativeQuery(`
-            SELECT b.order_no, b.subtotal, b.discount, b.midtrans_trx_id as payment_request_id, b.payment_method, b.deeplink_redirect, b.promo_code_applied, b.store_id, x.account_number
+            SELECT b.order_no, b.subtotal, b.discount, b.payment_request_id as payment_request_id, b.payment_method, b.deeplink_redirect, b.promo_code_applied, b.store_id, x.account_number
             FROM bookings b
-            JOIN xendit_payment_responses x ON x.id = b.midtrans_trx_id
+            JOIN xendit_payment_responses x ON x.id = b.payment_request_id
             WHERE b.id = $1 AND b.status_order = $2 AND b.member_id = $3
         `, [booking_id, pendingPaymentStatusId.rows[0].id, memberId]);
 

@@ -370,7 +370,7 @@ module.exports = {
                 INSERT INTO bookings (
                     store_id, member_id, payment_method, status_order, order_no, reservation_date, 
                     contact_person_name, contact_person_phone, notes, subtotal, discount, promo_code_applied,
-                    midtrans_trx_id, deeplink_redirect, expiry_date, created_by, updated_by, created_at, updated_at
+                    payment_request_id, deeplink_redirect, expiry_date, created_by, updated_by, created_at, updated_at
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $16, $17, $17)
                 RETURNING id
             `, [
