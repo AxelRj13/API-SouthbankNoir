@@ -25,10 +25,10 @@ module.exports = {
                     FROM booking_details bd
                     JOIN bookings b ON bd.booking_id = b.id
                     JOIN tables t ON bd.table_id = t.id
-                    LEFT JOIN table_events te ON t.id = te.table_id AND te.status = $4
+                    LEFT JOIN table_events te ON t.id = te.table_id AND te.status = $3
                     LEFT JOIN events e ON 
                         te.event_id = e.id AND 
-                        e.status = $4 AND
+                        e.status = $3 AND
                         b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date)
                 )
                 SELECT booking_id, SUM(total_table_capacity) as total_table_capacity, MAX(minimum_spend) as minimum_spend
@@ -38,6 +38,7 @@ module.exports = {
             )
             SELECT b.id, 
                 b.order_no, 
+                so.name as status,
                 to_char(b.reservation_date, 'Dy, DD Mon YYYY') as reservation_date,
                 string_agg(DISTINCT t.name || ' ' || t.table_no, ' | ') as table_name,
                 tc.total_table_capacity as capacity,
@@ -57,17 +58,28 @@ module.exports = {
             JOIN stores s ON b.store_id = s.id
             LEFT JOIN events e ON 
                 e.store_id = s.id AND
-                e.status = $4 AND
+                e.status = $3 AND
                 (b.reservation_date BETWEEN date(e.start_date) AND date(e.end_date))
             JOIN xendit_payment_responses x ON x.id = b.payment_request_id
             WHERE b.id = $1 AND 
-                lower(so.name) = $2 AND 
-                b.member_id = $3
-            GROUP BY b.id, b.order_no, b.reservation_date, tc.minimum_spend, tc.total_table_capacity, x.id
-        `, [booking_id, 'pending payment', memberId, 1]);
+                b.member_id = $2
+            GROUP BY b.id, b.order_no, b.reservation_date, tc.minimum_spend, tc.total_table_capacity, x.id, so.name
+        `, [booking_id, memberId, 1]);
 
         if (existingBookings.rows.length <= 0) {
-            return sails.helpers.convertResult(0, 'Order not valid or already paid.', null, this.res);
+            return sails.helpers.convertResult(0, 'Order not exist.', null, this.res);
+        }
+
+        if (existingBookings.rows[0].status.toLowerCase() == 'success') {
+            // booking already paid, directly return success
+            return sails.helpers.convertResult(1, 'Booking Successfully Paid', {
+                receipt_ref_number: (existingBookings.rows[0].payment_id) ? existingBookings.rows[0].payment_id : null,
+                booking_no: existingBookings.rows[0].order_no,
+                reservation_date: existingBookings.rows[0].reservation_date,
+                table_name: existingBookings.rows[0].table_name,
+                table_capacity: 'Max ' + existingBookings.rows[0].capacity + ' people',
+                minimum_spend: 'Rp. ' + await sails.helpers.numberFormat(parseInt(existingBookings.rows[0].minimum_spend))
+            }, this.res);
         }
 
         // call payment gateway API to validate payment
