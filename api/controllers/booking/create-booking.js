@@ -259,7 +259,7 @@ module.exports = {
                             "cardInformation": {
                                 "cardNumber": payload.card_number,
                                 "expiryMonth": payload.card_exp_month,
-                                "expiryYear": payload.card_exp_year,
+                                "expiryYear": '20' + payload.card_exp_year,
                                 "cvv": payload.card_cvv
                             }
                         }
