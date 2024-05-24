@@ -210,7 +210,10 @@ module.exports = {
             });
             const paymentRequestClient = xenditClient.PaymentRequest;
 
-            let expiryTimeSetting = new Date(currentDate.getTime() + (sails.config.paymentExpiry * 60 * 1000));
+            var expiryTime = new Date(currentDate.getTime() + (sails.config.paymentExpiry * 60 * 1000));
+            if (paymentMethod.rows[0].payment_type == 'ewallet' || paymentMethod.rows[0].payment_type == 'credit_card') {
+                expiryTime = new Date(currentDate.getTime() + ((sails.config.paymentExpiry + 30) * 60 * 1000)); // add 30 more minutes for ewallet and cc
+            }
             var isError = false;
             var errorMsg;
             var data = {
@@ -228,7 +231,7 @@ module.exports = {
                         "channelCode": paymentMethod.rows[0].bank_transfer_name,
                         "channelProperties" : {
                             "customerName" : "Southbank Noir",
-                            "expiresAt" : expiryTimeSetting
+                            "expiresAt" : expiryTime
                         }
                     }
                 };
@@ -324,7 +327,6 @@ module.exports = {
             }
 
             // after payment is created, save record to DB
-            var expiryTime = expiryTimeSetting;
             let paymentMethodObj = paymentResult.paymentMethod;
             if (paymentMethodObj.type == 'VIRTUAL_ACCOUNT') {
                 let vaObject = paymentMethodObj.virtualAccount;
