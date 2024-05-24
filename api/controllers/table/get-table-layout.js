@@ -48,7 +48,7 @@ module.exports = {
             var bookingClosedWording = '';
             if (bookingFeatureConfig.rows.length > 0) {
                 bookingFeature = bookingFeatureConfig.rows[0].value;
-                if (!bookingFeature) {
+                if (bookingFeature == 0) {
                     // if closed, then retrieve the wording
                     let bookingClosedWordingConfig = await sails.sendNativeQuery(`
                         SELECT c.value
