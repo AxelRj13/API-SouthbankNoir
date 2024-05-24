@@ -38,7 +38,14 @@ module.exports = {
                 GROUP BY s.id, s.name
             `, [store_id, date, 1, sails.config.imagePath]);
 
+            let configuration = await sails.sendNativeQuery(`
+                SELECT c.value
+                FROM configurations c
+                WHERE c.name = $1 AND c.status = $2
+            `, ['booking_active', 1]);
+
             result = {
+                booking_active: configuration.rows.length > 0 ? configuration.rows[0].value : 1,
                 store_id: storeAndDateInfo.rows[0].id,
                 store_name: storeAndDateInfo.rows[0].name,
                 store_iamge: storeAndDateInfo.rows[0].store_image,
