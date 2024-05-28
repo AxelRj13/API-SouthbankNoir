@@ -222,8 +222,6 @@ module.exports = {
                 "currency" : "IDR",
                 "referenceId" : orderNumber + sails.config.orderTag
             };
-            let paymentResult;
-            let deeplinkRedirect;
             
             if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
                 data.paymentMethod = {
@@ -284,25 +282,6 @@ module.exports = {
                                     "paymentMethodId": response.id,
                                     "referenceId" : orderNumber + sails.config.orderTag
                                 };
-
-                                paymentRequestClient.createPaymentRequest({data}).then((response) => {
-                                    if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
-                                        paymentResult = response;
-                                        // for cc and ewallet
-                                        if (response.status == 'REQUIRES_ACTION') {
-                                            if (response.actions) {
-                                                deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
-                                            }
-                                        }
-                                    } else {
-                                        sails.log(response);
-                                        isError = true;
-                                    }
-                                }).catch((err) => {
-                                    errorMsg = err.errorCode + ' - ' + err.message;
-                                    sails.log(errorMsg);
-                                    isError = true;
-                                });
                             }
                         }
                     }).catch((err) => {
@@ -321,26 +300,26 @@ module.exports = {
             }
 
             // call xendit API to create payment request
-            if (paymentMethod.rows[0].payment_type !== 'credit_card') {
-                await paymentRequestClient.createPaymentRequest({data}).then((response) => {
-                    if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
-                        paymentResult = response;
-                        // for cc and ewallet
-                        if (response.status == 'REQUIRES_ACTION') {
-                            if (response.actions) {
-                                deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
-                            }
+            let paymentResult;
+            let deeplinkRedirect;
+            await paymentRequestClient.createPaymentRequest({data}).then((response) => {
+                if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
+                    paymentResult = response;
+                    // for cc and ewallet
+                    if (response.status == 'REQUIRES_ACTION') {
+                        if (response.actions) {
+                            deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
                         }
-                    } else {
-                        sails.log(response);
-                        isError = true;
                     }
-                }).catch((err) => {
-                    errorMsg = err.errorCode + ' - ' + err.message;
-                    sails.log(errorMsg);
+                } else {
+                    sails.log(response);
                     isError = true;
-                });
-            }
+                }
+            }).catch((err) => {
+                errorMsg = err.errorCode + ' - ' + err.message;
+                sails.log(errorMsg);
+                isError = true;
+            });
             
             // if error, stop process and return error response
             if (isError) {
