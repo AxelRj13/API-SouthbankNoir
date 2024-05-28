@@ -222,6 +222,8 @@ module.exports = {
                 "currency" : "IDR",
                 "referenceId" : orderNumber + sails.config.orderTag
             };
+            let paymentResult;
+            let deeplinkRedirect;
             
             if (paymentMethod.rows[0].payment_type == 'bank_transfer') {
                 data.paymentMethod = {
@@ -319,8 +321,6 @@ module.exports = {
             }
 
             // call xendit API to create payment request
-            let paymentResult;
-            let deeplinkRedirect;
             if (paymentMethod.rows[0].payment_type !== 'credit_card') {
                 await paymentRequestClient.createPaymentRequest({data}).then((response) => {
                     if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
