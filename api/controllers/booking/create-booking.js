@@ -302,6 +302,7 @@ module.exports = {
             // call xendit API to create payment request
             let paymentResult;
             let deeplinkRedirect;
+            sails.log(data);
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
                 if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
                     paymentResult = response;

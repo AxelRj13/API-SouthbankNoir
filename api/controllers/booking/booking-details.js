@@ -46,6 +46,7 @@ module.exports = {
                 promo_code: bookings.rows[0].promo_code_applied,
                 total_discount: bookings.rows[0].discount ? 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].discount)) : '-',
                 total_payment: 'Rp. ' + await sails.helpers.numberFormat(subtotal),
+                subtotal: 'Rp. ' + await sails.helpers.numberFormat(parseInt(bookings.rows[0].subtotal)),
                 details: []
             };
 
