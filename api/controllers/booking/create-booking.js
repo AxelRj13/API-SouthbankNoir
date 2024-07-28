@@ -307,8 +307,8 @@ module.exports = {
             sails.log("START CALL XENDIT PAYMENT API");
             let paymentResult;
             let deeplinkRedirect;
+            sails.log("PAYMENT METHOD ID: "+ data.paymentMethodId);
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
-                sails.log("PAYMENT METHOD ID: "+ data.paymentMethodId);
                 if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
                     paymentResult = response;
                     // for cc and ewallet
