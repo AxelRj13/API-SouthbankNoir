@@ -308,6 +308,7 @@ module.exports = {
             let paymentResult;
             let deeplinkRedirect;
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
+                sails.log("PAYMENT METHOD ID: "+ data.paymentMethodId);
                 if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
                     paymentResult = response;
                     // for cc and ewallet
