@@ -268,6 +268,8 @@ module.exports = {
                         }
                     };
 
+                    sails.log("START TOKENIZED CC");
+
                     // tokenized cc information
                     await paymentMethodClient.createPaymentMethod({data}).then((response) => {
                         if (response.error_code) {
@@ -290,6 +292,8 @@ module.exports = {
                         isError = true;
                     });
 
+                    sails.log("FINISH TOKENIZED CC");
+
                     // if error, stop process and return error response
                     if (isError) {
                         return sails.helpers.convertResult(0, errorMsg, null, this.res);
@@ -300,6 +304,7 @@ module.exports = {
             }
 
             // call xendit API to create payment request
+            sails.log("START CALL XENDIT PAYMENT API");
             let paymentResult;
             let deeplinkRedirect;
             await paymentRequestClient.createPaymentRequest({data}).then((response) => {
@@ -320,6 +325,8 @@ module.exports = {
                 sails.log(errorMsg);
                 isError = true;
             });
+
+            sails.log("FINISH CALL XENDIT PAYMENT API");
             
             // if error, stop process and return error response
             if (isError) {
