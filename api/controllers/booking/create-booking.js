@@ -268,8 +268,6 @@ module.exports = {
                         }
                     };
 
-                    sails.log("START TOKENIZED CC");
-
                     // tokenized cc information
                     await paymentMethodClient.createPaymentMethod({data}).then((response) => {
                         if (response.error_code) {
@@ -292,8 +290,6 @@ module.exports = {
                         isError = true;
                     });
 
-                    sails.log("FINISH TOKENIZED CC");
-
                     // if error, stop process and return error response
                     if (isError) {
                         return sails.helpers.convertResult(0, errorMsg, null, this.res);
@@ -304,31 +300,36 @@ module.exports = {
             }
 
             // call xendit API to create payment request
-            sails.log("START CALL XENDIT PAYMENT API");
             let paymentResult;
             let deeplinkRedirect;
-            sails.log("PAYMENT METHOD ID: "+ data.paymentMethodId);
-            await paymentRequestClient.createPaymentRequest({data}).then((response) => {
-                if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
-                    paymentResult = response;
-                    // for cc and ewallet
-                    if (response.status == 'REQUIRES_ACTION') {
-                        if (response.actions) {
-                            deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
-                        }
-                    }
-                } else {
-                    sails.log(response);
-                    isError = true;
-                }
-            }).catch((err) => {
-                errorMsg = err.errorCode + ' - ' + err.message;
-                sails.log(errorMsg);
-                isError = true;
-            });
 
-            sails.log("FINISH CALL XENDIT PAYMENT API");
-            
+            var attempt = 3; // for retry if payment request is failed (max 3 times)
+            for (var i = 0; i < attempt; i++) {
+                sails.log("Payment Request attempt - " + (i+1));
+                await paymentRequestClient.createPaymentRequest({data}).then((response) => {
+                    if (response.status == 'PENDING' || response.status == 'REQUIRES_ACTION') {
+                        paymentResult = response;
+                        // for cc and ewallet
+                        if (response.status == 'REQUIRES_ACTION') {
+                            if (response.actions) {
+                                deeplinkRedirect = response.actions.filter((x) => x.action == 'AUTH')[0].url;
+
+                                // request success, break looping
+                                i = attempt;
+                                isError = false;
+                            }
+                        }
+                    } else {
+                        sails.log(response);
+                        isError = true;
+                    }
+                }).catch((err) => {
+                    errorMsg = err.errorCode + ' - ' + err.message;
+                    sails.log(errorMsg);
+                    isError = true;
+                });
+            }
+
             // if error, stop process and return error response
             if (isError) {
                 return sails.helpers.convertResult(0, errorMsg, null, this.res);
