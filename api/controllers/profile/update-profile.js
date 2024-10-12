@@ -69,7 +69,6 @@ async function uploadFileAndUpdateProfile(input) {
                     }
                     sails.log('File deleted successfully');
                 });
-                sails.log(uploadedFiles[0]);
                 let image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
                 await sails.sendNativeQuery(`
                     UPDATE members
