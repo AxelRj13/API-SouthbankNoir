@@ -66,7 +66,6 @@ module.exports = {
               email: email,
               date_of_birth: date_of_birth,
               city: city.toUpperCase(),
-              gender: null,
               photo: 'profile/noprofileimage.png',
               status: 1,
               password: bcrypt.hashSync(password, 10),
@@ -86,7 +85,6 @@ module.exports = {
               first_name: jwTokenSign.user.data.first_name,
               last_name: jwTokenSign.user.data.last_name,
               phone: jwTokenSign.user.data.phone,
-              gender: jwTokenSign.user.data.gender,
               city: jwTokenSign.user.data.city,
               date_of_birth: await sails.helpers.convertDate(jwTokenSign.user.data.date_of_birth),
               photo: sails.config.sailsImagePath + jwTokenSign.user.data.photo
