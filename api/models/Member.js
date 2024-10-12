@@ -25,6 +25,7 @@ module.exports = {
       },
       gender: {
         type: 'string',
+        required: true,
         maxLength: 10
       },
       city: {
