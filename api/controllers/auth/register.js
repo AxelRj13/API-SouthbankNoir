@@ -6,8 +6,7 @@ module.exports = {
     inputs: {
       email: {
         description: 'The email to try in this attempt, e.g. "irl@example.com".',
-        type: 'string',
-        required: true
+        type: 'string'
       },
       phone: {
         type: 'string'
@@ -46,13 +45,20 @@ module.exports = {
   
     fn: async function ({email, phone, first_name, last_name, date_of_birth, city, password, confirm_password}) {
       // check existing user
-      var userRecord = await Member.findOne({
-        select: ['id', 'email', 'first_name', 'last_name', 'password'],
-        where: {email: email.toLowerCase()}
-      });
+      if (email) {
+        var userRecord = await Member.findOne({
+          select: ['id', 'email', 'phone', 'first_name', 'last_name', 'password'],
+          where: { email: email.toLowerCase() }
+        });
+      } else {
+        var userRecord = await Member.findOne({
+          select: ['id', 'email', 'phone', 'first_name', 'last_name', 'password'],
+          where: { phone: phone }
+        });
+      }
   
       if (userRecord) {
-        return sails.helpers.convertResult(0, 'Email is already exist, please try with another email.', null, null);
+        return sails.helpers.convertResult(0, 'Email / Phone is already exist, please try with another.', null, null);
         // return this.res.status(400).send('Email is already exist, please try with another email.');
       } else {
         if (password !== confirm_password) {
@@ -66,7 +72,6 @@ module.exports = {
               email: email,
               date_of_birth: date_of_birth,
               city: city.toUpperCase(),
-              gender: '',
               photo: 'profile/noprofileimage.png',
               status: 1,
               password: bcrypt.hashSync(password, 10),

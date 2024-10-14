@@ -6,7 +6,6 @@ module.exports = {
     attributes: {
       email: {
         type: 'string',
-        required: true,
         unique: true,
         isEmail: true,
         maxLength: 100
