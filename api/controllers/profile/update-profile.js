@@ -4,28 +4,28 @@ module.exports = {
     fn: async function () {
         // upload file
         let result = await uploadFileAndUpdateProfile(this.req);
-        if (result) {
-            let userData = await sails.sendNativeQuery(`
-                SELECT *
-                FROM members
-                WHERE id = $1
-            `, [this.req.headers['member-id']]);
+        let userData = await sails.sendNativeQuery(`
+            SELECT *
+            FROM members
+            WHERE id = $1
+        `, [this.req.headers['member-id']]);
 
-            let data = {
-                id: userData.rows[0].id,
-                email: userData.rows[0].email,
-                first_name: userData.rows[0].first_name,
-                last_name: userData.rows[0].last_name,
-                phone: userData.rows[0].phone,
-                // gender: userData.rows[0].gender,
-                city: userData.rows[0].city,
-                date_of_birth: await sails.helpers.convertDate(userData.rows[0].date_of_birth),
-                photo: sails.config.sailsImagePath + userData.rows[0].photo
-            };
-            
-            return await sails.helpers.convertResult(1, 'Profile successfully updated.', data, this.res)
-        } else {
-            return await sails.helpers.convertResult(0, 'Profile update failed, please check your file upload.', null, this.res);
+        let data = {
+            id: userData.rows[0].id,
+            email: userData.rows[0].email,
+            first_name: userData.rows[0].first_name,
+            last_name: userData.rows[0].last_name,
+            phone: userData.rows[0].phone,
+            city: userData.rows[0].city,
+            date_of_birth: await sails.helpers.convertDate(userData.rows[0].date_of_birth),
+            photo: sails.config.sailsImagePath + userData.rows[0].photo
+        };
+        if (result == 'success') {
+            return await sails.helpers.convertResult(1, 'Profile successfully updated.', data, this.res);
+        } else if (result == 'input empty') {
+            return await sails.helpers.convertResult(0, 'Profile update failed, please check your inputs.', null, this.res);
+        } else if (result == 'email duplicate') {
+            return await sails.helpers.convertResult(0, 'Email address already exist.', null, this.res);
         }
     }
 };
@@ -54,59 +54,77 @@ async function uploadFileAndUpdateProfile(input) {
             if (err) {
                 sails.log(err.message);
             }
-            if (uploadedFiles.length > 0) {
-                // Delete the old image
-                let userPhoto = await sails.sendNativeQuery(`
-                    SELECT photo
-                    FROM members
-                    WHERE id = $1
-                `, [memberId]);
-                const fs = require('fs');
-                fs.unlink(asssetImagePath + '/' + userPhoto.rows[0].photo, (err) => {
-                    if (err) {
-                        sails.log(err);
-                        return;
-                    }
-                    sails.log('File deleted successfully');
-                });
-                let image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
-                await sails.sendNativeQuery(`
-                    UPDATE members
-                    SET first_name = $1,
-                        last_name = $2,
-                        phone = $3,
-                        date_of_birth = $4,
-                        city = $5,
-                        gender = $6,
-                        photo = $7,
-                        updated_by = $8,
-                        updated_at = $9
-                    WHERE id = $8
-                `, [
-                    input.body.first_name, input.body.last_name, input.body.phone, 
-                    input.body.date_of_birth, input.body.city.toUpperCase(), input.body.gender.toUpperCase(), 
-                    image, memberId, new Date()
-                ]);
-            } else {
-                await sails.sendNativeQuery(`
-                    UPDATE members
-                    SET first_name = $1,
-                        last_name = $2,
-                        phone = $3,
-                        date_of_birth = $4,
-                        city = $5,
-                        gender = $6,
-                        updated_by = $7,
-                        updated_at = $8
-                    WHERE id = $7
-                `, [
-                    input.body.first_name, input.body.last_name, input.body.phone, 
-                    input.body.date_of_birth, input.body.city.toUpperCase(), input.body.gender.toUpperCase(), 
-                    memberId, new Date()
-                ]);
-            }
 
-            resolve(true);
+            // if inputs are null
+            if (
+                input.body.first_name == '' || input.body.last_name == '' || input.body.phone == '' || input.body.date_of_birth == '' || input.body.city == '' || 
+                input.body.first_name == null || input.body.last_name == null || input.body.phone == null || input.body.date_of_birth == null || input.body.city == null
+            ) {
+                resolve("input empty");
+            } else {
+                // check unique email
+                let userEmail = await sails.sendNativeQuery(`
+                    SELECT email
+                    FROM members
+                    WHERE email = $1 AND id NOT IN ($2)
+                `, [input.body.email, memberId]);
+                if (userEmail.rows.length > 0) {
+                    resolve("email duplicate");
+                } else {
+                    if (uploadedFiles.length > 0) {
+                        // Delete the old image
+                        let userPhoto = await sails.sendNativeQuery(`
+                            SELECT photo
+                            FROM members
+                            WHERE id = $1
+                        `, [memberId]);
+                        const fs = require('fs');
+                        fs.unlink(asssetImagePath + '/' + userPhoto.rows[0].photo, (err) => {
+                            if (err) {
+                                sails.log(err);
+                                return;
+                            }
+                            sails.log('File deleted successfully');
+                        });
+                        let image = 'profile/'+fileName+'.'+uploadedFiles[0].type.replace('image/', '');
+                        await sails.sendNativeQuery(`
+                            UPDATE members
+                            SET first_name = $1,
+                                last_name = $2,
+                                phone = $3,
+                                date_of_birth = $4,
+                                city = $5,
+                                email = $6,
+                                photo = $7,
+                                updated_by = $8,
+                                updated_at = $9
+                            WHERE id = $8
+                        `, [
+                            input.body.first_name, input.body.last_name, input.body.phone, 
+                            input.body.date_of_birth, input.body.city.toUpperCase(), (input.body.email ? input.body.email : null),
+                            image, memberId, new Date()
+                        ]);
+                    } else {
+                        await sails.sendNativeQuery(`
+                            UPDATE members
+                            SET first_name = $1,
+                                last_name = $2,
+                                phone = $3,
+                                date_of_birth = $4,
+                                city = $5,
+                                email = $6,
+                                updated_by = $7,
+                                updated_at = $8
+                            WHERE id = $7
+                        `, [
+                            input.body.first_name, input.body.last_name, input.body.phone, 
+                            input.body.date_of_birth, input.body.city.toUpperCase(), (input.body.email ? input.body.email : null), 
+                            memberId, new Date()
+                        ]);
+                    }
+                    resolve("success");
+                }
+            }
         });
     });
 }
