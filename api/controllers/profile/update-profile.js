@@ -62,15 +62,22 @@ async function uploadFileAndUpdateProfile(input) {
             ) {
                 resolve("input empty");
             } else {
+                var flag = true;
                 // check unique email
-                let userEmail = await sails.sendNativeQuery(`
-                    SELECT email
-                    FROM members
-                    WHERE email = $1 AND id NOT IN ($2)
-                `, [input.body.email, memberId]);
-                if (userEmail.rows.length > 0) {
-                    resolve("email duplicate");
-                } else {
+                if (input.body.email != null && input.body.email != '') {
+                    let userEmail = await sails.sendNativeQuery(`
+                        SELECT email
+                        FROM members
+                        WHERE email = $1 AND id NOT IN ($2)
+                    `, [input.body.email, memberId]);
+
+                    if (userEmail.rows.length > 0) {
+                        flag = false;
+                        resolve("email duplicate");
+                    }
+                }
+
+                if (flag) {
                     if (uploadedFiles.length > 0) {
                         // Delete the old image
                         let userPhoto = await sails.sendNativeQuery(`
