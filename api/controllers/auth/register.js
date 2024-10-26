@@ -87,7 +87,7 @@ module.exports = {
             var jwTokenSign = jwToken.sign(newMember, this.req.headers['x-secret-token']);
             let data = {
               id: jwTokenSign.user.data.id,
-              email: jwTokenSign.user.data.email,
+              email: jwTokenSign.user.data.email ? jwTokenSign.user.data.email : '',
               first_name: jwTokenSign.user.data.first_name,
               last_name: jwTokenSign.user.data.last_name,
               phone: jwTokenSign.user.data.phone,
