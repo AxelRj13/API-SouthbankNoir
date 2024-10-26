@@ -12,7 +12,7 @@ module.exports = {
 
         let data = {
             id: userData.rows[0].id,
-            email: userData.rows[0].email,
+            email: userData.rows[0].email ? userData.rows[0].email : '',
             first_name: userData.rows[0].first_name,
             last_name: userData.rows[0].last_name,
             phone: userData.rows[0].phone,
